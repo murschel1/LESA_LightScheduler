@@ -70,8 +70,7 @@ Public Sub WriteToOutput()
     Set XCelSheet1 = XCelWorkbook.Sheets(1)
     Set XCelSheet2 = XCelWorkbook.Sheets(2)
     
-    'Unprotect Output worksheet
-    XCelSheet2.Unprotect (PROTECT_PASSWORD)
+    
     
     'Determine last populated row on worksheet 1
     lNumberOfNonEmptyRowsSheet1 = CountNonEmptyRows(XCelSheet1, NUMBER_OF_COLUMNS)
@@ -170,43 +169,32 @@ Public Sub WriteToOutput()
     'DATA VALIDATION
     '---------------
     
-    'IF THERE ARE FEWER THAN 2 POPULATED ROWS, THROW ERROR
-    If lNumberOfNonEmptyRowsSheet1 < 3 Then
-        'Protect Output worksheet
-        XCelSheet2.Protect (PROTECT_PASSWORD)
     
-        MsgBox "Please enter at least two rows.", vbExclamation, "Data Entry Error"
-        Exit Sub
-    End If
     
     'IF REPEAT PATTERN INTERVAL, TIME AFTER LAST ROW, OR TIME BETWEEN REPEATS FIELDS ARE EMPTY, THROW ERROR
     If lRepeatInterval = 0 Then
-        'Protect Output worksheet
-        XCelSheet2.Protect (PROTECT_PASSWORD)
+
         
         MsgBox "Please enter Repeat pattern interval.", vbExclamation, "Data Entry Error"
         Exit Sub
     End If
     
     If Len(Trim(sRepeatUnit)) = 0 Then
-        'Protect Output worksheet
-        XCelSheet2.Protect (PROTECT_PASSWORD)
+
         
         MsgBox "Please enter Repeat pattern units.", vbExclamation, "Data Entry Error"
         Exit Sub
     End If
     
     If (lTimeAfterLastRowInterval = 0) And (lNumberOfNonEmptyRowsSheet2 > 1) Then
-        'Protect Output worksheet
-        XCelSheet2.Protect (PROTECT_PASSWORD)
+
         
         MsgBox "Please enter Time after last row interval.", vbExclamation, "Data Entry Error"
         Exit Sub
     End If
     
     If (Len(Trim(sTimeAfterLastRowUnit)) = 0) And (lNumberOfNonEmptyRowsSheet2 > 1) Then
-        'Protect Output worksheet
-        XCelSheet2.Protect (PROTECT_PASSWORD)
+
         
         MsgBox "Please enter Time after last row units.", vbExclamation, "Data Entry Error"
         Exit Sub
@@ -228,55 +216,6 @@ Public Sub WriteToOutput()
 '        Exit Sub
 '    End If
     
-    'IF ANY ROWS ARE MISSING VALUES, THROW ERROR
-        
-    'Check all populated rows for complete data and throw error if any rows have incomplete data
-    For lRow = 2 To lNumberOfNonEmptyRowsSheet1
-        'Count number of columns populated
-        For lColumn = 1 To NUMBER_OF_COLUMNS
-            If Len(Trim(XCelSheet1.Cells(lRow, lColumn))) = 0 Then
-                'Protect Output worksheet
-                XCelSheet2.Protect (PROTECT_PASSWORD)
-        
-                MsgBox "Please fill in missing data on row " & lRow & ".", vbExclamation, "Data Entry Error"
-                Exit Sub
-            End If
-        Next lColumn
-    Next lRow
-        
-   
-    'IF TIME INTERVAL BETWEEN ANY ROW AND PREVIOUS ROW IS LESS THAN OR EQUAL TO ZERO, THROW ERROR
-    
-    'Reset row counter
-    lRowCounter1 = 2
-    
-    
-    Do While Len(Trim(XCelSheet1.Cells(lRowCounter1, 1))) > 0
-    
-        If Len(Trim(XCelSheet1.Cells(lRowCounter1 + 1, 1))) > 0 Then
-            'Format start and end date of rows and convert to string
-            sDateStart = Format(Trim(XCelSheet1.Cells(lRowCounter1, 1)), DATE_FORMATTING_STRING)
-            sDateEnd = Format(Trim(XCelSheet1.Cells(lRowCounter1 + 1, 1)), DATE_FORMATTING_STRING)
-
-            'Format start and end times of rows and convert to string
-            sTimeStart = Format(TimeSerial(XCelSheet1.Cells(lRowCounter1, 2), XCelSheet1.Cells(lRowCounter1, 3), XCelSheet1.Cells(lRowCounter1, 4)), TIME_FORMATTING_STRING)
-            sTimeEnd = Format(TimeSerial(XCelSheet1.Cells(lRowCounter1 + 1, 2), XCelSheet1.Cells(lRowCounter1 + 1, 3), XCelSheet1.Cells(lRowCounter1 + 1, 4)), TIME_FORMATTING_STRING)
-            
-            lRowsInterval = DateDiff("s", CDate(sDateStart & " " & sTimeStart), CDate(sDateEnd & " " & sTimeEnd))
-            
-            If lRowsInterval <= 0 Then
-                'Protect Output worksheet
-                XCelSheet2.Protect (PROTECT_PASSWORD)
-        
-                MsgBox "Please make date/time on row " & (lRowCounter1 + 1) & " greater than row " & lRowCounter1 & ".", vbExclamation, "Data Entry Error"
-                Exit Sub
-            End If
-        End If
-        
-        lRowCounter1 = lRowCounter1 + 1
-    Loop
-    
-    
     'IF REQUESTED REPEAT INTERVAL IS SMALLER THAN PATTERN INTERVAL, OR IF THERE IS NO DIFFERENCE BETWEEN START AND END TIME, THROW ERROR
     
     'Format start and end date of pattern and convert to string
@@ -296,14 +235,10 @@ Public Sub WriteToOutput()
         If (lPatternInterval > 0) Then
             'If pattern interval is smaller than repeat interval, throw error
             If (lRepeatIntervalInSeconds < lPatternInterval) Then
-               'Protect Output worksheet
-                XCelSheet2.Protect (PROTECT_PASSWORD)
             
                MsgBox "Please enter repeat time interval that is larger than pattern time interval.", vbExclamation, "Data Entry Error"
                Exit Sub
             ElseIf ((lPatternInterval + lTimeBetweenRepeatsIntervalInSeconds) > lRepeatIntervalInSeconds) Then
-               'Protect Output worksheet
-               XCelSheet2.Protect (PROTECT_PASSWORD)
             
                MsgBox "The sum of the duration of the repeated pattern and the time between repeats must be smaller than the repeat time interval.", vbExclamation, "Data Entry Error"
                Exit Sub
@@ -321,21 +256,21 @@ Public Sub WriteToOutput()
     
     If lNumberOfRepetitions > 1 Then
         If lTimeBetweenRepeatsInterval = 0 Then
-            'Protect Output worksheet
-            XCelSheet2.Protect (PROTECT_PASSWORD)
+
         
             MsgBox "Please enter Time between repeats interval.", vbExclamation, "Data Entry Error"
             Exit Sub
         End If
     
         If Len(Trim(sTimeBetweenRepeatsUnit)) = 0 Then
-            'Protect Output worksheet
-            XCelSheet2.Protect (PROTECT_PASSWORD)
+
             
             MsgBox "Please enter Time between repeats units.", vbExclamation, "Data Entry Error"
             Exit Sub
         End If
     End If
+        
+
         
     '------------------------------------------
     'POPULATE ARRAY WITH CONTENTS OF INPUT PAGE
@@ -386,6 +321,9 @@ Public Sub WriteToOutput()
     '------------------------------------------------------------------------------------------------------------------------------------------
     'CHANGE DATE AND TIME VALUES BASED ON REPETITION INTERVAL AND APPEND CONTENTS OF INPUT PAGE TO OUTPUT PAGE WITH REQUESTED NUMBER OF REPEATS
     '------------------------------------------------------------------------------------------------------------------------------------------
+    
+    'Unprotect Output worksheet
+    XCelSheet2.Unprotect (PROTECT_PASSWORD)
     
     'Initialize counters
     lFirstBlankRow = lNumberOfNonEmptyRowsSheet2 + 1
@@ -1207,4 +1145,64 @@ Private Function ToFileExtension(vbeComponentType As vbext_ComponentType) As Str
             ToFileExtension = vbNullString
     End Select
  
+End Function
+
+Private Function CommonDataValidation(xCelSheet As Excel.Worksheet) As Boolean
+    Dim lRowCounter As Long: lRowCounter = 2
+    Dim lRow, lColumn, lRowsInterval As Long
+    Dim sDateStart, sDateEnd, sTimeStart, sTimeEnd As String
+    Dim llNumberOfNonEmptyRows As Long
+    
+    lNumberOfNonEmptyRows = CountNonEmptyRows(xCelSheet, NUMBER_OF_COLUMNS)
+    
+    'IF THERE ARE FEWER THAN 2 POPULATED ROWS, THROW ERROR
+    If lNumberOfNonEmptyRows < 3 Then
+    
+        MsgBox "Please enter at least two rows.", vbExclamation, "Data Entry Error"
+        CommonDataValidation = False
+        Exit Function
+    End If
+    
+    'IF ANY ROWS ARE MISSING VALUES, THROW ERROR
+        
+    'Check all populated rows for complete data and throw error if any rows have incomplete data
+    For lRow = 2 To lNumberOfNonEmptyRows
+        'Count number of columns populated
+        For lColumn = 1 To NUMBER_OF_COLUMNS
+            If Len(Trim(xCelSheet.Cells(lRow, lColumn))) = 0 Then
+        
+                MsgBox "Please fill in missing data on row " & lRow & ".", vbExclamation, "Data Entry Error"
+                CommonDataValidation = False
+                Exit Function
+            End If
+        Next lColumn
+    Next lRow
+    
+    'IF TIME INTERVAL BETWEEN ANY ROW AND PREVIOUS ROW IS LESS THAN OR EQUAL TO ZERO, THROW ERROR
+    
+    Do While Len(Trim(xCelSheet.Cells(lRowCounter, 1))) > 0
+    
+        If Len(Trim(xCelSheet.Cells(lRowCounter + 1, 1))) > 0 Then
+            'Format start and end date of rows and convert to string
+            sDateStart = Format(Trim(xCelSheet.Cells(lRowCounter, 1)), DATE_FORMATTING_STRING)
+            sDateEnd = Format(Trim(xCelSheet.Cells(lRowCounter + 1, 1)), DATE_FORMATTING_STRING)
+
+            'Format start and end times of rows and convert to string
+            sTimeStart = Format(TimeSerial(xCelSheet.Cells(lRowCounter, 2), xCelSheet.Cells(lRowCounter, 3), xCelSheet.Cells(lRowCounter, 4)), TIME_FORMATTING_STRING)
+            sTimeEnd = Format(TimeSerial(xCelSheet.Cells(lRowCounter + 1, 2), xCelSheet.Cells(lRowCounter + 1, 3), xCelSheet.Cells(lRowCounter + 1, 4)), TIME_FORMATTING_STRING)
+            
+            lRowsInterval = DateDiff("s", CDate(sDateStart & " " & sTimeStart), CDate(sDateEnd & " " & sTimeEnd))
+            
+            If lRowsInterval <= 0 Then
+        
+                MsgBox "Please make date/time on row " & (lRowCounter + 1) & " greater than row " & lRowCounter & ".", vbExclamation, "Data Entry Error"
+                CommonDataValidation = False
+                Exit Function
+            End If
+        End If
+        
+        lRowCounter = lRowCounter + 1
+    Loop
+    
+    CommonDataValidation = True
 End Function
