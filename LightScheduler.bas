@@ -169,7 +169,10 @@ Public Sub WriteToOutput()
     'DATA VALIDATION
     '---------------
     
-    
+    'DO GENERAL WORKSHEET VALIDATION
+    If Not CommonDataValidation(XCelSheet1) Then
+        Exit Sub
+    End If
     
     'IF REPEAT PATTERN INTERVAL, TIME AFTER LAST ROW, OR TIME BETWEEN REPEATS FIELDS ARE EMPTY, THROW ERROR
     If lRepeatInterval = 0 Then
@@ -597,6 +600,16 @@ Public Sub WriteToFile()
         End Select
     Else
         MsgBox "Please enter units for last row execution time.", vbExclamation, "Last row execution time"
+        Exit Sub
+    End If
+    
+    
+    '---------------
+    'DATA VALIDATION
+    '---------------
+    
+    'DO GENERAL WORKSHEET VALIDATION
+    If Not CommonDataValidation(XCelSheet2) Then
         Exit Sub
     End If
     
@@ -1151,7 +1164,7 @@ Private Function CommonDataValidation(xCelSheet As Excel.Worksheet) As Boolean
     Dim lRowCounter As Long: lRowCounter = 2
     Dim lRow, lColumn, lRowsInterval As Long
     Dim sDateStart, sDateEnd, sTimeStart, sTimeEnd As String
-    Dim llNumberOfNonEmptyRows As Long
+    Dim lNumberOfNonEmptyRows As Long
     
     lNumberOfNonEmptyRows = CountNonEmptyRows(xCelSheet, NUMBER_OF_COLUMNS)
     
