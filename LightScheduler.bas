@@ -1221,5 +1221,21 @@ Private Function CommonDataValidation(xCelSheet As Excel.Worksheet) As Boolean
 End Function
 
 Public Sub LoadTemplate()
-
+    Dim XCelWorkbook As Excel.Workbook
+    Dim XCelSheet1 As Excel.Worksheet
+    Dim iFileNum As Integer: iFileNum = FreeFile
+    Dim sFileName As String
+    Dim sStartDate As String
+    Dim iStartTimeHH, iStartTimeMM, iStartTimeSS As Integer
+    
+    'Initialize workbook and worksheets
+    Set XCelWorkbook = Application.ActiveWorkbook
+    Set XCelSheet1 = XCelWorkbook.Sheets(1)
+    
+    If Dir(sFileName) <> "" Then
+        Open sFileName For Input As iFileNum
+    Else
+        MsgBox "Template file does not exist.", vbExclamation, "File not found"
+    End If
+    
 End Sub
