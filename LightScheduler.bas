@@ -1219,3 +1219,7 @@ Private Function CommonDataValidation(xCelSheet As Excel.Worksheet) As Boolean
     
     CommonDataValidation = True
 End Function
+
+Public Sub LoadTemplate()
+
+End Sub
