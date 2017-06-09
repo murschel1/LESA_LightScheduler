@@ -24,6 +24,16 @@ Const HOST_KEY As String = "ssh-rsa 2048 13:f0:b2:db:93:db:9d:30:6b:1a:b6:ac:15:
 Const SESSION_NAME As String = "Raspberry_pi"
 Const RASP_PI_INTERFACE_NAME As String = "HortiLight_v1.1.py"
 Const RUNLIGHTCOMMAND_FILE_NAME As String = "RunLightCommand_v1.1.py"
+Const TEMPLATE_FILE_NAME_ROW As Integer = 6
+Const TEMPLATE_FILE_NAME_CELL As Integer = 14
+Const TEMPLATE_FILE_DATE_ROW As Integer = 7
+Const TEMPLATE_FILE_DATE_CELL As Integer = 14
+Const TEMPLATE_FILE_TIMEHH_ROW As Integer = 8
+Const TEMPLATE_FILE_TIMEHH_CELL As Integer = 14
+Const TEMPLATE_FILE_TIMEMM_ROW As Integer = 9
+Const TEMPLATE_FILE_TIMEMM_CELL As Integer = 14
+Const TEMPLATE_FILE_TIMESS_ROW As Integer = 10
+Const TEMPLATE_FILE_TIMESS_CELL As Integer = 14
 
 '------------------------------------------------------------------------------------------------------------
 'Sub: WriteToOutput
@@ -1232,10 +1242,67 @@ Public Sub LoadTemplate()
     Set XCelWorkbook = Application.ActiveWorkbook
     Set XCelSheet1 = XCelWorkbook.Sheets(1)
     
+    '---------------
+    'DATA VALIDATION
+    '---------------
+    
+    'CHECK ALL TEMPLATE FILE DATA ENTRY FIELDS
+    
+    If Len(Trim(XCelSheet1.Cells(TEMPLATE_FILE_NAME_ROW, TEMPLATE_FILE_NAME_CELL))) = 0 Then
+        MsgBox "Please enter template file name.", vbCritical, "Data Entry Error"
+        Exit Sub
+    End If
+    
+    If Len(Trim(XCelSheet1.Cells(TEMPLATE_FILE_DATE_ROW, TEMPLATE_FILE_DATE_CELL))) = 0 Then
+        MsgBox "Please enter template start date.", vbCritical, "Data Entry Error"
+        Exit Sub
+    End If
+    
+    If Len(Trim(XCelSheet1.Cells(TEMPLATE_FILE_TIMEHH_ROW, TEMPLATE_FILE_TIMEHH_CELL))) = 0 Then
+        MsgBox "Please enter template start time HH.", vbCritical, "Data Entry Error"
+        Exit Sub
+    End If
+    
+    If Len(Trim(XCelSheet1.Cells(TEMPLATE_FILE_TIMEHH_ROW, TEMPLATE_FILE_TIMEHH_CELL))) = 0 Then
+        MsgBox "Please enter template start time HH.", vbCritical, "Data Entry Error"
+        Exit Sub
+    End If
+    
+    If Len(Trim(XCelSheet1.Cells(TEMPLATE_FILE_TIMEMM_ROW, TEMPLATE_FILE_TIMEMM_CELL))) = 0 Then
+        MsgBox "Please enter template start time MM.", vbCritical, "Data Entry Error"
+        Exit Sub
+    End If
+    
+    If Len(Trim(XCelSheet1.Cells(TEMPLATE_FILE_TIMESS_ROW, TEMPLATE_FILE_TIMESS_CELL))) = 0 Then
+        MsgBox "Please enter template start time SS.", vbCritical, "Data Entry Error"
+        Exit Sub
+    End If
+    
+    
+    'Get values for template file name, start date, start time
+    sFileName = XCelWorkbook.Path & "\" & Trim(XCelSheet1.Cells(TEMPLATE_FILE_NAME_ROW, TEMPLATE_FILE_NAME_CELL))
+    sStartDate = CStr(Trim(XCelSheet1.Cells(TEMPLATE_FILE_DATE_ROW, TEMPLATE_FILE_DATE_CELL)))
+    iStartTimeHH = CInt(Trim(XCelSheet1.Cells(TEMPLATE_FILE_TIMEHH_ROW, TEMPLATE_FILE_TIMEHH_CELL)))
+    iStartTimeMM = CInt(Trim(XCelSheet1.Cells(TEMPLATE_FILE_TIMEMM_ROW, TEMPLATE_FILE_TIMEMM_CELL)))
+    iStartTimeSS = CInt(Trim(XCelSheet1.Cells(TEMPLATE_FILE_TIMESS_ROW, TEMPLATE_FILE_TIMESS_CELL)))
+    
+    'If user defined file name exists, load it. Otherwise, throw error.
     If Dir(sFileName) <> "" Then
         Open sFileName For Input As iFileNum
     Else
-        MsgBox "Template file does not exist.", vbExclamation, "File not found"
+        MsgBox "Template file does not exist.", vbCritical, "File not found"
+        Exit Sub
     End If
     
+    
+    
+    Exit Sub
+
+ERROR:
+    MsgBox Err.Description, vbCritical, "Error"
+    On Error Resume Next
+    Close iFileNum
+    Kill (XCelWorkbook.Path & "\" & sFileName)
+    Set XCelSheet1 = Nothing
+    Set XCelWorkbook = Nothing
 End Sub
