@@ -13,6 +13,15 @@ Const REPEAT_UNITS_CELL_NUMBER As Integer = 15
 Const REPEAT_PATTERN_ROW_NUMBER As Integer = 3
 Const TIME_FROM_LAST_ROW_ROW_NUMBER As Integer = 4
 Const TIME_BETWEEN_REPEATS_ROW_NUMBER As Integer = 5
+Const CHAOS_EXPERIMENT_DURATION_ROW_NUMBER As Integer = 14
+Const CHAOS_PHOTO_PERIOD_ROW_NUMBER As Integer = 15
+Const CHAOS_DARK_PERIOD_ROW_NUMBER As Integer = 16
+Const CHAOS_FREQUENCY_ROW_NUMBER As Integer = 17
+Const CHAOS_X0_ROW_NUMBER As Integer = 18
+Const CHAOS_R_ROW_NUMBER As Integer = 19
+Const CHAOS_MD1_ROW_NUMBER As Integer = 20
+Const CHAOS_MD2_ROW_NUMBER As Integer = 21
+Const CHAOS_START_DATETIME_ROW_NUMBER As Integer = 22
 Const LAST_COLUMN_LETTER As String = "J"
 Const DATE_FORMATTING_STRING As String = "yyyy-m-d"
 Const TIME_FORMATTING_STRING As String = "H:mm:ss"
@@ -29,14 +38,14 @@ Const RASP_PI_INTERFACE_NAME As String = "HortiLight_v1.1.py"
 Const RUNLIGHTCOMMAND_FILE_NAME As String = "RunLightCommand_v1.1.py"
 
 '------------------------------------------------------------------------------------------------------------
-'Sub: WriteToOutput
+'Sub: WriteToOutputPattern
 'Coded by: Matt Urschel
 'Date : 3 May 2017
 'Description: Code for button "Write To Output" on Input worksheet - Appends user-entered rows on Input
 '             page to end of data on Output page, with start time after a user-entered interval since
 '             last line. Repeats pattern for user-specified time interval (times are automatically advanced).
 '------------------------------------------------------------------------------------------------------------
-Public Sub WriteToOutput()
+Public Sub WriteToOutputPattern()
     On Error GoTo ERROR
 
    
@@ -523,6 +532,29 @@ ERROR:
     Set XCelSheet2 = Nothing
 
     Set XCelWorkbook = Nothing
+    
+End Sub
+Public Sub WriteToOutputChaos()
+    Dim XCelWorkbook As Excel.Workbook
+    Dim XCelSheet1 As Excel.Worksheet
+    Dim XCelSheet2 As Excel.Worksheet
+    Dim lRowCounter1 As Long: lRowCounter1 = 0
+    Dim lRowCounter2 As Long: lRowCounter2 = 0
+    Dim lFirstBlankRow As Long
+    Dim vArrayChaos() As Variant
+    Dim lExperimentDuration As Long: lExperimentDuration = 0
+    Dim lPhotoPeriod As Long: lPhotoPeriod = 0
+    Dim lDarkPeriod As Long: lDarkPeriod = 0
+    Dim dFrequency As Double: dFrequency = 0
+    Dim dX0 As Double: dX0 = 0
+    Dim dR As Double: dR = 0
+    Dim dMD1, dMD2 As Double: dMD1 = 0: dMD2 = 0
+    Dim dtDateTime As Date
+    
+    '------------------------------
+    'VARIABLE/OBJECT INITIALIZATION
+    '------------------------------
+    
     
 End Sub
 
