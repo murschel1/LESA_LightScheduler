@@ -10,6 +10,9 @@ Const LAST_ROW_EXECUTION_TIME_UNITS_CELL_NUMBER = 14
 Const LAST_ROW_EXECUTION_TIME_ROW_NUMBER = 7
 Const REPEAT_INTERVAL_CELL_NUMBER As Integer = 14
 Const REPEAT_UNITS_CELL_NUMBER As Integer = 15
+Const REPEAT_PATTERN_ROW_NUMBER As Integer = 3
+Const TIME_FROM_LAST_ROW_ROW_NUMBER As Integer = 4
+Const TIME_BETWEEN_REPEATS_ROW_NUMBER As Integer = 5
 Const LAST_COLUMN_LETTER As String = "J"
 Const DATE_FORMATTING_STRING As String = "yyyy-m-d"
 Const TIME_FORMATTING_STRING As String = "H:mm:ss"
@@ -82,13 +85,13 @@ Public Sub WriteToOutput()
     lRowCounter1 = 2
     
     'Get contents of interval cell if changed
-    If Len(Trim(XCelSheet1.Cells(lRowCounter1, REPEAT_INTERVAL_CELL_NUMBER))) > 0 Then
-       lRepeatInterval = CLng(XCelSheet1.Cells(lRowCounter1, REPEAT_INTERVAL_CELL_NUMBER))
+    If Len(Trim(XCelSheet1.Cells(REPEAT_PATTERN_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) > 0 Then
+       lRepeatInterval = CLng(XCelSheet1.Cells(REPEAT_PATTERN_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'Get contents of unit cell if changed
-    If Len(Trim(XCelSheet1.Cells(lRowCounter1, REPEAT_UNITS_CELL_NUMBER))) > 0 Then
-       sRepeatUnit = Trim(XCelSheet1.Cells(lRowCounter1, REPEAT_UNITS_CELL_NUMBER))
+    If Len(Trim(XCelSheet1.Cells(REPEAT_PATTERN_ROW_NUMBER, REPEAT_UNITS_CELL_NUMBER))) > 0 Then
+       sRepeatUnit = Trim(XCelSheet1.Cells(REPEAT_PATTERN_ROW_NUMBER, REPEAT_UNITS_CELL_NUMBER))
        
        'Convert interval unit to string for DateAdd function and convert repeat interval to seconds for later comparison to pattern interval
        Select Case sRepeatUnit
@@ -113,13 +116,13 @@ Public Sub WriteToOutput()
     End If
     
     'Get contents of time after last row interval cell if changed
-    If Len(Trim(XCelSheet1.Cells(lRowCounter1 + 1, REPEAT_INTERVAL_CELL_NUMBER))) > 0 Then
-       lTimeAfterLastRowInterval = CLng(XCelSheet1.Cells(lRowCounter1 + 1, REPEAT_INTERVAL_CELL_NUMBER))
+    If Len(Trim(XCelSheet1.Cells(TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) > 0 Then
+       lTimeAfterLastRowInterval = CLng(XCelSheet1.Cells(TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'Get contents of time after last row unit cell if changed
-    If Len(Trim(XCelSheet1.Cells(lRowCounter1 + 1, REPEAT_UNITS_CELL_NUMBER))) > 0 Then
-       sTimeAfterLastRowUnit = Trim(XCelSheet1.Cells(lRowCounter1 + 1, REPEAT_UNITS_CELL_NUMBER))
+    If Len(Trim(XCelSheet1.Cells(TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_UNITS_CELL_NUMBER))) > 0 Then
+       sTimeAfterLastRowUnit = Trim(XCelSheet1.Cells(TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_UNITS_CELL_NUMBER))
        
        'Convert interval unit to string for DateAdd function
        Select Case sTimeAfterLastRowUnit
@@ -137,13 +140,13 @@ Public Sub WriteToOutput()
     End If
     
     'Get contents of time between repeats interval cell if changed
-    If Len(Trim(XCelSheet1.Cells(lRowCounter1 + 2, REPEAT_INTERVAL_CELL_NUMBER))) > 0 Then
-       lTimeBetweenRepeatsInterval = CLng(XCelSheet1.Cells(lRowCounter1 + 2, REPEAT_INTERVAL_CELL_NUMBER))
+    If Len(Trim(XCelSheet1.Cells(TIME_BETWEEN_REPEATS_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) > 0 Then
+       lTimeBetweenRepeatsInterval = CLng(XCelSheet1.Cells(TIME_BETWEEN_REPEATS_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'Get contents of time between repeats unit cell if changed
-    If Len(Trim(XCelSheet1.Cells(lRowCounter1 + 2, REPEAT_UNITS_CELL_NUMBER))) > 0 Then
-       sTimeBetweenRepeatsUnit = Trim(XCelSheet1.Cells(lRowCounter1 + 2, REPEAT_UNITS_CELL_NUMBER))
+    If Len(Trim(XCelSheet1.Cells(TIME_BETWEEN_REPEATS_ROW_NUMBER, REPEAT_UNITS_CELL_NUMBER))) > 0 Then
+       sTimeBetweenRepeatsUnit = Trim(XCelSheet1.Cells(TIME_BETWEEN_REPEATS_ROW_NUMBER, REPEAT_UNITS_CELL_NUMBER))
        
        'Convert interval unit to string for DateAdd function and convert repeat interval to seconds for later comparison to pattern interval
        Select Case sTimeBetweenRepeatsUnit
@@ -836,12 +839,12 @@ Public Sub ClearInput()
         Next i
     End With
     
-    XCelSheet1.Cells(2, REPEAT_INTERVAL_CELL_NUMBER).Value = ""
-    XCelSheet1.Cells(2, REPEAT_INTERVAL_CELL_NUMBER + 1).Value = ""
-    XCelSheet1.Cells(3, REPEAT_INTERVAL_CELL_NUMBER).Value = ""
-    XCelSheet1.Cells(3, REPEAT_INTERVAL_CELL_NUMBER + 1).Value = ""
-    XCelSheet1.Cells(4, REPEAT_INTERVAL_CELL_NUMBER).Value = ""
-    XCelSheet1.Cells(4, REPEAT_INTERVAL_CELL_NUMBER + 1).Value = ""
+    XCelSheet1.Cells(REPEAT_PATTERN_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER).Value = ""
+    XCelSheet1.Cells(REPEAT_PATTERN_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1).Value = ""
+    XCelSheet1.Cells(TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER).Value = ""
+    XCelSheet1.Cells(TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1).Value = ""
+    XCelSheet1.Cells(TIME_BETWEEN_REPEATS_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER).Value = ""
+    XCelSheet1.Cells(TIME_BETWEEN_REPEATS_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1).Value = ""
         
     'Protect Output worksheet
     XCelSheet1.Protect (PROTECT_PASSWORD)
