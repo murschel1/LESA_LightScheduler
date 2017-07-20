@@ -13,6 +13,8 @@ Const REPEAT_UNITS_CELL_NUMBER As Integer = 15
 Const REPEAT_PATTERN_ROW_NUMBER As Integer = 3
 Const TIME_FROM_LAST_ROW_ROW_NUMBER As Integer = 4
 Const TIME_BETWEEN_REPEATS_ROW_NUMBER As Integer = 5
+Const FREQUENCY_UPPER_BOUND As Double = 4
+Const FREQUENCY_LOWER_BOUND As Double = 3
 Const CHAOS_EXPERIMENT_DURATION_ROW_NUMBER As Integer = 14
 Const CHAOS_PHOTO_PERIOD_ROW_NUMBER As Integer = 15
 Const CHAOS_DARK_PERIOD_ROW_NUMBER As Integer = 16
@@ -540,6 +542,7 @@ Public Sub WriteToOutputChaos()
     Dim XCelSheet2 As Excel.Worksheet
     Dim lRowCounter1 As Long: lRowCounter1 = 0
     Dim lRowCounter2 As Long: lRowCounter2 = 0
+    Dim lNumberOfNonEmptyRowsSheet2 As Long: lNumberOfNonEmptyRowsSheet2 = 0
     Dim lFirstBlankRow As Long
     Dim vArrayChaos() As Variant
     Dim lExperimentDuration As Long: lExperimentDuration = 0
@@ -549,12 +552,104 @@ Public Sub WriteToOutputChaos()
     Dim dX0 As Double: dX0 = 0
     Dim dR As Double: dR = 0
     Dim dMD1, dMD2 As Double: dMD1 = 0: dMD2 = 0
-    Dim dtDateTime As Date
+    Dim sDateTime As String
     
-    '------------------------------
-    'VARIABLE/OBJECT INITIALIZATION
-    '------------------------------
+    '---------------------
+    'OBJECT INITIALIZATION
+    '---------------------
     
+    'Initialize workbook and worksheets
+    Set XCelWorkbook = Application.ActiveWorkbook
+    Set XCelSheet1 = XCelWorkbook.Sheets(1)
+    Set XCelSheet2 = XCelWorkbook.Sheets(2)
+    
+    '----------------------------------
+    'DATA VALIDATION AND INITIALIZATION
+    '----------------------------------
+    
+    'Experiment duration
+    If Len(Trim(XCelSheet1.Cells(CHAOS_EXPERIMENT_DURATION_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        MsgBox "Please enter experiment duration.", vbExclamation, "Data Entry Error"
+    Else
+        lExperimentDuration = CLng(XCelSheet1.Cells(CHAOS_EXPERIMENT_DURATION_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    End If
+    
+    'Photoperiod
+    If Len(Trim(XCelSheet1.Cells(CHAOS_PHOTO_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        MsgBox "Please enter photoperiod.", vbExclamation, "Data Entry Error"
+    Else
+        lPhotoPeriod = CLng(XCelSheet1.Cells(CHAOS_PHOTO_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    End If
+    
+    'Dark period
+    If Len(Trim(XCelSheet1.Cells(CHAOS_DARK_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        MsgBox "Please enter dark period.", vbExclamation, "Data Entry Error"
+    Else
+        lDarkPeriod = CLng(XCelSheet1.Cells(CHAOS_DARK_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    End If
+    
+    'Frequency
+    If Len(Trim(XCelSheet1.Cells(CHAOS_FREQUENCY_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        dFrequency = ((FREQUENCY_UPPER_BOUND - FREQUENCY_LOWER_BOUND) * Rnd) + FREQUENCY_LOWER_BOUND
+    Else
+        dFrequency = CLng(XCelSheet1.Cells(CHAOS_FREQUENCY_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    End If
+    
+    'X0
+    If Len(Trim(XCelSheet1.Cells(CHAOS_X0_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        MsgBox "Please enter X0 (enter 0 to randomize).", vbExclamation, "Data Entry Error"
+    Else
+        dX0 = CLng(XCelSheet1.Cells(CHAOS_X0_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    End If
+    
+    'R
+    If Len(Trim(XCelSheet1.Cells(CHAOS_R_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        MsgBox "Please enter R (enter 0 to randomize).", vbExclamation, "Data Entry Error"
+    Else
+        dR = CLng(XCelSheet1.Cells(CHAOS_R_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    End If
+    
+    'MD1
+    If Len(Trim(XCelSheet1.Cells(CHAOS_MD1_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        MsgBox "Please enter MD1 (enter 0 to randomize).", vbExclamation, "Data Entry Error"
+    Else
+        dMD1 = CLng(XCelSheet1.Cells(CHAOS_MD1_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    End If
+    
+    'MD2
+    If Len(Trim(XCelSheet1.Cells(CHAOS_MD2_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        MsgBox "Please enter MD2 (enter 0 to randomize).", vbExclamation, "Data Entry Error"
+    Else
+        dMD2 = CLng(XCelSheet1.Cells(CHAOS_MD2_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    End If
+    
+    'Determine last populated row on worksheet 2
+    lNumberOfNonEmptyRowsSheet2 = CountNonEmptyRows(XCelSheet2, NUMBER_OF_COLUMNS)
+    
+    'If there are rows on output worksheet, set start date for chaos commands to that date.
+    'Otherwise, set it to user entered date in chaos section of input worksheet.
+    If lNumberOfNonEmptyRowsSheet2 > 1 Then
+        sDateTime = Format(XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 1) & " " & _
+                     XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 2) & ":" & _
+                     XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 3) & ":" & _
+                     XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 4), DATE_FORMATTING_STRING & " " & TIME_FORMATTING_STRING)
+    Else
+        sDateTime = Format(XCelSheet1.Cells(CHAOS_START_DATETIME_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER), DATE_FORMATTING_STRING & " " & TIME_FORMATTING_STRING)
+    End If
+    
+Exit Sub
+    
+ERROR:
+    MsgBox Err.Description, vbCritical, "Error"
+    On Error Resume Next
+    
+    'Protect Output worksheet
+    XCelSheet2.Protect (PROTECT_PASSWORD)
+
+    Set XCelSheet1 = Nothing
+    Set XCelSheet2 = Nothing
+
+    Set XCelWorkbook = Nothing
     
 End Sub
 
