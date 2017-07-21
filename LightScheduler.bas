@@ -18,11 +18,10 @@ Const FREQUENCY_LOWER_BOUND As Double = 3
 Const CHAOS_EXPERIMENT_DURATION_ROW_NUMBER As Integer = 14
 Const CHAOS_PHOTO_PERIOD_ROW_NUMBER As Integer = 15
 Const CHAOS_DARK_PERIOD_ROW_NUMBER As Integer = 16
-Const CHAOS_FREQUENCY_ROW_NUMBER As Integer = 17
-Const CHAOS_X0_ROW_NUMBER As Integer = 18
-Const CHAOS_R_ROW_NUMBER As Integer = 19
-Const CHAOS_MD1_ROW_NUMBER As Integer = 20
-Const CHAOS_MD2_ROW_NUMBER As Integer = 21
+Const CHAOS_X0_ROW_NUMBER As Integer = 17
+Const CHAOS_R_ROW_NUMBER As Integer = 18
+Const CHAOS_MD1_ROW_NUMBER As Integer = 19
+Const CHAOS_MD2_ROW_NUMBER As Integer = 20
 Const CHAOS_START_DATETIME_ROW_NUMBER As Integer = 22
 Const LAST_COLUMN_LETTER As String = "J"
 Const DATE_FORMATTING_STRING As String = "yyyy-m-d"
@@ -545,14 +544,19 @@ Public Sub WriteToOutputChaos()
     Dim lNumberOfNonEmptyRowsSheet2 As Long: lNumberOfNonEmptyRowsSheet2 = 0
     Dim lFirstBlankRow As Long
     Dim vArrayChaos() As Variant
-    Dim lExperimentDuration As Long: lExperimentDuration = 0
-    Dim lPhotoPeriod As Long: lPhotoPeriod = 0
-    Dim lDarkPeriod As Long: lDarkPeriod = 0
+    Dim dExperimentDuration As Double: dExperimentDuration = 0
+    Dim sExperimentDurationUnits As String
+    Dim dPhotoPeriod As Double: dPhotoPeriod = 0
+    Dim sPhotoPeriodUnits As String
+    Dim dDarkPeriod As Double: dDarkPeriod = 0
+    Dim sDarkPeriodUnits As String
+    Dim lNumberOfRepetitions, lRepeat As Long
     Dim dFrequency As Double: dFrequency = 0
     Dim dX0 As Double: dX0 = 0
     Dim dR As Double: dR = 0
     Dim dMD1, dMD2 As Double: dMD1 = 0: dMD2 = 0
     Dim sDateTime As String
+    Dim bX0Random, bRRandom, bMD1Random, bMD2Random As Boolean: bX0Random = False: bRRandom = False: bMD1Random = False: bMD2Random = False
     
     '---------------------
     'OBJECT INITIALIZATION
@@ -570,58 +574,107 @@ Public Sub WriteToOutputChaos()
     'Experiment duration
     If Len(Trim(XCelSheet1.Cells(CHAOS_EXPERIMENT_DURATION_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
         MsgBox "Please enter experiment duration.", vbExclamation, "Data Entry Error"
+        Exit Sub
     Else
-        lExperimentDuration = CLng(XCelSheet1.Cells(CHAOS_EXPERIMENT_DURATION_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        dExperimentDuration = CLng(XCelSheet1.Cells(CHAOS_EXPERIMENT_DURATION_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        sExperimentDurationUnits = XCelSheet1.Cells(CHAOS_EXPERIMENT_DURATION_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1)
+        
+        'Convert experiment duration to seconds
+        Select Case sExperimentDurationUnits
+            Case "Weeks"
+                dExperimentDuration = dExperimentDuration * 604800
+            Case "Days"
+                dExperimentDuration = dExperimentDuration * 86400
+            Case "Hours"
+                dExperimentDuration = dExperimentDuration * 3600
+            Case "Minutes"
+                dExperimentDuration = dExperimentDuration * 60
+            Case "Repeats"
+                lNumberOfRepetitions = dExperimentDuration
+        End Select
     End If
     
     'Photoperiod
     If Len(Trim(XCelSheet1.Cells(CHAOS_PHOTO_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
         MsgBox "Please enter photoperiod.", vbExclamation, "Data Entry Error"
+        Exit Sub
     Else
-        lPhotoPeriod = CLng(XCelSheet1.Cells(CHAOS_PHOTO_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        dPhotoPeriod = CLng(XCelSheet1.Cells(CHAOS_PHOTO_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        sPhotoPeriodUnits = XCelSheet1.Cells(CHAOS_PHOTO_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1)
+        'Convert photo period to seconds
+        Select Case sPhotoPeriodUnits
+            Case "Weeks"
+                dPhotoPeriod = dPhotoPeriod * 604800
+            Case "Days"
+                dPhotoPeriod = dPhotoPeriod * 86400
+            Case "Hours"
+                dPhotoPeriod = dPhotoPeriod * 3600
+            Case "Minutes"
+                dPhotoPeriod = dPhotoPeriod * 60
+        End Select
     End If
     
     'Dark period
     If Len(Trim(XCelSheet1.Cells(CHAOS_DARK_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
         MsgBox "Please enter dark period.", vbExclamation, "Data Entry Error"
+        Exit Sub
     Else
-        lDarkPeriod = CLng(XCelSheet1.Cells(CHAOS_DARK_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        dDarkPeriod = CLng(XCelSheet1.Cells(CHAOS_DARK_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        sDarkPeriodUnits = XCelSheet1.Cells(CHAOS_PHOTO_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1)
+        'Convert dark period to seconds
+        Select Case sDarkPeriodUnits
+            Case "Weeks"
+                dDarkPeriod = dDarkPeriod * 604800
+            Case "Days"
+                dDarkPeriod = dDarkPeriod * 86400
+            Case "Hours"
+                dDarkPeriod = dDarkPeriod * 3600
+            Case "Minutes"
+                dDarkPeriod = dDarkPeriod * 60
+        End Select
     End If
     
-    'Frequency
-    If Len(Trim(XCelSheet1.Cells(CHAOS_FREQUENCY_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
-        dFrequency = ((FREQUENCY_UPPER_BOUND - FREQUENCY_LOWER_BOUND) * Rnd) + FREQUENCY_LOWER_BOUND
-    Else
-        dFrequency = CLng(XCelSheet1.Cells(CHAOS_FREQUENCY_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    'If experiment duration is shorter than the sum of the photo period and dark period, throw error
+    If dExperimentDuration < (dPhotoPeriod + dDarkPeriod) Then
+        MsgBox "Sum of photo period and dark period must be less than total experiment duration.", vbExclamation, "Data Entry Error"
+        Exit Sub
+    End If
+    
+    'Determine total number of photo/dark periods that need to be generated (if experiment duration units were not "Repeats")
+    If sExperimentDurationUnits <> "Repeats" Then
+        lNumberOfRepetitions = CLng(dExperimentDuration / (dPhotoPeriod + dDarkPeriod))
     End If
     
     'X0
     If Len(Trim(XCelSheet1.Cells(CHAOS_X0_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
-        MsgBox "Please enter X0 (enter 0 to randomize).", vbExclamation, "Data Entry Error"
+        bX0Random = True
     Else
         dX0 = CLng(XCelSheet1.Cells(CHAOS_X0_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'R
     If Len(Trim(XCelSheet1.Cells(CHAOS_R_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
-        MsgBox "Please enter R (enter 0 to randomize).", vbExclamation, "Data Entry Error"
+        bRRandom = True
     Else
         dR = CLng(XCelSheet1.Cells(CHAOS_R_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'MD1
     If Len(Trim(XCelSheet1.Cells(CHAOS_MD1_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
-        MsgBox "Please enter MD1 (enter 0 to randomize).", vbExclamation, "Data Entry Error"
+        bMD1Random = True
     Else
         dMD1 = CLng(XCelSheet1.Cells(CHAOS_MD1_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'MD2
     If Len(Trim(XCelSheet1.Cells(CHAOS_MD2_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
-        MsgBox "Please enter MD2 (enter 0 to randomize).", vbExclamation, "Data Entry Error"
+        bMD2Random = True
     Else
         dMD2 = CLng(XCelSheet1.Cells(CHAOS_MD2_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
+    
+    'Set frequency based on photoperiod
+    dFrequency = CDbl(dPhotoPeriod / 300)
     
     'Determine last populated row on worksheet 2
     lNumberOfNonEmptyRowsSheet2 = CountNonEmptyRows(XCelSheet2, NUMBER_OF_COLUMNS)
@@ -636,6 +689,11 @@ Public Sub WriteToOutputChaos()
     Else
         sDateTime = Format(XCelSheet1.Cells(CHAOS_START_DATETIME_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER), DATE_FORMATTING_STRING & " " & TIME_FORMATTING_STRING)
     End If
+    
+    For lRepeat = 1 To lNumberOfRepetitions
+        'Redim array for current repeat
+        '
+    Next lRepeat
     
 Exit Sub
     
