@@ -35,6 +35,15 @@ Const WINSCP_PATH As String = "C:\Program Files (x86)\WinSCP\"
 Const QUOTATION As String = """"
 Const HOST_KEY As String = "ssh-rsa 2048 13:f0:b2:db:93:db:9d:30:6b:1a:b6:ac:15:76:dc:c3"
 Const SESSION_NAME As String = "Raspberry_pi"
+Const X0_UBOUND As Double = 1
+Const X0_LBOUND As Double = 0
+Const R_UBOUND As Double = 4
+Const R_LBOUND As Double = 3.5
+Const MD1_UBOUND As Double = 1
+Const MD1_LBOUND As Double = 0
+Const MD2_UBOUND As Double = 1
+Const MD2_LBOUND As Double = 0
+
 Const RASP_PI_INTERFACE_NAME As String = "HortiLight_v1.1.py"
 Const RUNLIGHTCOMMAND_FILE_NAME As String = "RunLightCommand_v1.1.py"
 
@@ -557,6 +566,10 @@ Public Sub WriteToOutputChaos()
     Dim dMD1, dMD2 As Double: dMD1 = 0: dMD2 = 0
     Dim sDateTime As String
     Dim bX0Random, bRRandom, bMD1Random, bMD2Random As Boolean: bX0Random = False: bRRandom = False: bMD1Random = False: bMD2Random = False
+    Dim iArrayRowCounter, iArrayColumnCounter As Integer: iArrayRowCounter = 0: iArrayColumnCounter = 0
+    Dim Pi As Double: Pi = 4 * Atn(1)
+    Dim iFileNum As Integer: iFileNum = FreeFile
+    Dim sFileName As String: sFileName = Application.ActiveWorkbook.Path & "\Chaos_log.txt"
     
     '---------------------
     'OBJECT INITIALIZATION
@@ -566,6 +579,8 @@ Public Sub WriteToOutputChaos()
     Set XCelWorkbook = Application.ActiveWorkbook
     Set XCelSheet1 = XCelWorkbook.Sheets(1)
     Set XCelSheet2 = XCelWorkbook.Sheets(2)
+    
+    Open sFileName For Output As iFileNum
     
     '----------------------------------
     'DATA VALIDATION AND INITIALIZATION
@@ -649,28 +664,28 @@ Public Sub WriteToOutputChaos()
     If Len(Trim(XCelSheet1.Cells(CHAOS_X0_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
         bX0Random = True
     Else
-        dX0 = CLng(XCelSheet1.Cells(CHAOS_X0_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        dX0 = CDbl(XCelSheet1.Cells(CHAOS_X0_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'R
     If Len(Trim(XCelSheet1.Cells(CHAOS_R_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
         bRRandom = True
     Else
-        dR = CLng(XCelSheet1.Cells(CHAOS_R_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        dR = CDbl(XCelSheet1.Cells(CHAOS_R_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'MD1
     If Len(Trim(XCelSheet1.Cells(CHAOS_MD1_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
         bMD1Random = True
     Else
-        dMD1 = CLng(XCelSheet1.Cells(CHAOS_MD1_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        dMD1 = CDbl(XCelSheet1.Cells(CHAOS_MD1_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'MD2
     If Len(Trim(XCelSheet1.Cells(CHAOS_MD2_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
         bMD2Random = True
     Else
-        dMD2 = CLng(XCelSheet1.Cells(CHAOS_MD2_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        dMD2 = CDbl(XCelSheet1.Cells(CHAOS_MD2_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'Set frequency based on photoperiod
@@ -691,10 +706,105 @@ Public Sub WriteToOutputChaos()
     End If
     
     For lRepeat = 1 To lNumberOfRepetitions
-        'Redim array for current repeat
-        '
+        'Redim chaos array for current repeat
+        ReDim vArrayChaos(1 To 300, 1 To 8)
+        
+        'Randomize variables (if specified by user)
+        'X0
+        If bX0Random Then
+            Randomize
+            dX0 = (Rnd * (X0_UBOUND - X0_LBOUND)) + X0_LBOUND
+        End If
+        
+        'r
+        If bRRandom Then
+            Randomize
+            dR = (Rnd * (R_UBOUND - R_LBOUND)) + R_LBOUND
+        End If
+        
+        'MD1
+        If bMD1Random Then
+            Randomize
+            dMD1 = (Rnd * (MD1_UBOUND - MD1_LBOUND)) + MD1_LBOUND
+        End If
+        
+        'MD2
+        If bMD2Random Then
+            Randomize
+            dMD2 = (Rnd * (MD2_UBOUND - MD2_LBOUND)) + MD2_LBOUND
+        End If
+        
+        
+        For iArrayColumnCounter = 1 To 5
+            For iArrayRowCounter = 1 To 300
+                Select Case iArrayColumnCounter
+                    Case 1
+                        vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = iArrayRowCounter
+                    Case 2
+                        If iArrayRowCounter = 1 Then
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = (dR * dX0 * (1 - dX0))
+                        Else
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = dR * vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter) * (1 - vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter))
+                        End If
+                    Case 3
+                        vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Sin(vArrayChaos(iArrayRowCounter, 1) * Pi / 300)
+                    Case 4
+                        vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 3) * (1 - vArrayChaos(iArrayRowCounter, 2) * dMD1)
+                    Case 5
+                        If iArrayRowCounter > 1 Then
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = CDbl(vArrayChaos(iArrayRowCounter - 1, 5) + dFrequency)
+                        Else
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = iArrayRowCounter
+                        End If
+                End Select
+            
+                
+                
+            Next iArrayRowCounter
+        Next iArrayColumnCounter
+        
+        
+        For iArrayColumnCounter = 6 To 8
+            For iArrayRowCounter = 1 To 300
+                Select Case iArrayColumnCounter
+                    Case 6
+                        If Int(vArrayChaos(iArrayRowCounter, 5)) <= 300 Then
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 3) * (1 - vArrayChaos(Int(vArrayChaos(iArrayRowCounter, 5)), 2) * dMD2)
+                        Else
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 3) * (1 - vArrayChaos(300, 2) * dMD2)
+                        End If
+                    Case 7
+                        vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = (vArrayChaos(iArrayRowCounter, 6) + vArrayChaos(iArrayRowCounter, 4)) / 2
+                    Case 8
+                        vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 7) * 100
+                End Select
+            Next iArrayRowCounter
+        Next iArrayColumnCounter
+        
+        sLine = "Array " & lRepeat
+        Print #iFileNum, sLine
+        sLine = "Theta,Chaos,Sin(Theta),Damp,Time,Time&MaxDamp,FinalChaos,FinalChaos*100%"
+        Print #iFileNum, sLine
+        sLine = ""
+        
+        'Output array to log file
+        For iArrayRowCounter = 1 To 300
+            sLine = ""
+            For iArrayColumnCounter = 1 To 8
+                sLine = sLine & vArrayChaos(iArrayRowCounter, iArrayColumnCounter) & ","
+            Next iArrayColumnCounter
+            Print #iFileNum, sLine
+        Next iArrayRowCounter
+
+        
     Next lRepeat
     
+    
+    Close iFileNum
+    Set XCelSheet1 = Nothing
+    Set XCelSheet2 = Nothing
+    
+    Set XCelWorkbook = Nothing
 Exit Sub
     
 ERROR:
@@ -703,10 +813,10 @@ ERROR:
     
     'Protect Output worksheet
     XCelSheet2.Protect (PROTECT_PASSWORD)
-
+    Close iFileNum
     Set XCelSheet1 = Nothing
     Set XCelSheet2 = Nothing
-
+    
     Set XCelWorkbook = Nothing
     
 End Sub
