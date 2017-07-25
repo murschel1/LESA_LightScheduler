@@ -742,9 +742,9 @@ Public Sub WriteToOutputChaos()
                         vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = iArrayRowCounter
                     Case 2
                         If iArrayRowCounter = 1 Then
-                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = (dR * dX0 * (1 - dX0))
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Application.WorksheetFunction.RoundUp((dR * dX0 * (1 - dX0)), 4)
                         Else
-                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = dR * vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter) * (1 - vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter))
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Application.WorksheetFunction.RoundUp(dR * vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter) * (1 - vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter)), 4)
                         End If
                     Case 3
                         vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Sin(vArrayChaos(iArrayRowCounter, 1) * Pi / 300)
