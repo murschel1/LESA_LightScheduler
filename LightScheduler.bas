@@ -43,6 +43,15 @@ Const MD1_UBOUND As Double = 1
 Const MD1_LBOUND As Double = 0
 Const MD2_UBOUND As Double = 1
 Const MD2_LBOUND As Double = 0
+'*** NOTE: FUTURE VERSION SHOULD ALLOW USER ENTRY OF CHANNEL RATIOS AND MINIMUM CORRECTION ***
+Const CH1_RATIO As Double = 0 / 100
+Const CH2_RATIO As Double = 0 / 100
+Const CH3_RATIO As Double = 12 / 100
+Const CH4_RATIO As Double = 35 / 100
+Const CH5_RATIO As Double = 53 / 100
+Const CH6_RATIO As Double = 0 / 100
+Const MIN_CORRECTION As Double = 15
+'*********************************************************************************************'
 
 Const RASP_PI_INTERFACE_NAME As String = "HortiLight_v1.1.py"
 Const RUNLIGHTCOMMAND_FILE_NAME As String = "RunLightCommand_v1.1.py"
@@ -564,12 +573,13 @@ Public Sub WriteToOutputChaos()
     Dim dX0 As Double: dX0 = 0
     Dim dR As Double: dR = 0
     Dim dMD1, dMD2 As Double: dMD1 = 0: dMD2 = 0
-    Dim sDateTime As String
+    Dim sDateTime, sDate, sTime, sHH, sMM, sSS, sLine As String
     Dim bX0Random, bRRandom, bMD1Random, bMD2Random As Boolean: bX0Random = False: bRRandom = False: bMD1Random = False: bMD2Random = False
     Dim iArrayRowCounter, iArrayColumnCounter As Integer: iArrayRowCounter = 0: iArrayColumnCounter = 0
     Dim Pi As Double: Pi = 4 * Atn(1)
-    Dim iFileNum As Integer: iFileNum = FreeFile
-    Dim sFileName As String: sFileName = Application.ActiveWorkbook.Path & "\Chaos_log.txt"
+    Dim iLogFileNum As Integer: iLogFileNum = FreeFile
+    Dim sLogFileName As String: sLogFileName = Application.ActiveWorkbook.Path & "\Chaos_log.txt"
+    Dim sCH1, sCH2, sCH3, sCH4, sCH5, sCH6 As String
     
     '---------------------
     'OBJECT INITIALIZATION
@@ -580,7 +590,7 @@ Public Sub WriteToOutputChaos()
     Set XCelSheet1 = XCelWorkbook.Sheets(1)
     Set XCelSheet2 = XCelWorkbook.Sheets(2)
     
-    Open sFileName For Output As iFileNum
+    Open sLogFileName For Output As iLogFileNum
     
     '----------------------------------
     'DATA VALIDATION AND INITIALIZATION
@@ -694,6 +704,11 @@ Public Sub WriteToOutputChaos()
     'Determine last populated row on worksheet 2
     lNumberOfNonEmptyRowsSheet2 = CountNonEmptyRows(XCelSheet2, NUMBER_OF_COLUMNS)
     
+    'Set worksheet 2 row counter to first empty row on worksheet 2
+    If lNumberOfNonEmptyRowsSheet2 >= 2 Then
+        lRowCounter2 = lNumberOfNonEmptyRowsSheet2 + 1
+    End If
+    
     'If there are rows on output worksheet, set start date for chaos commands to that date.
     'Otherwise, set it to user entered date in chaos section of input worksheet.
     If lNumberOfNonEmptyRowsSheet2 > 1 Then
@@ -781,26 +796,67 @@ Public Sub WriteToOutputChaos()
             Next iArrayRowCounter
         Next iArrayColumnCounter
         
-        sLine = "Array " & lRepeat
-        Print #iFileNum, sLine
+        'Output chaos array to log file
+        'Heading
+        sLine = "Array " & lRepeat & " (r=" & dR & ", X0=" & dX0 & ", MD1=" & dMD1 & ", MD2=" & dMD2 & ", F=" & dFrequency & ")"
+        Print #iLogFileNum, sLine
         sLine = "Theta,Chaos,Sin(Theta),Damp,Time,Time&MaxDamp,FinalChaos,FinalChaos*100%"
-        Print #iFileNum, sLine
+        Print #iLogFileNum, sLine
         sLine = ""
         
-        'Output array to log file
+        'Array
         For iArrayRowCounter = 1 To 300
             sLine = ""
             For iArrayColumnCounter = 1 To 8
                 sLine = sLine & vArrayChaos(iArrayRowCounter, iArrayColumnCounter) & ","
             Next iArrayColumnCounter
-            Print #iFileNum, sLine
+            Print #iLogFileNum, sLine
         Next iArrayRowCounter
-
+        
+        'Write to output worksheet
+        For iArrayRowCounter = 1 To 300
+            'Date and Time
+            If iArrayRowCounter > 1 Then
+                sDateTime = CStr(DateAdd("s", CDbl(vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5)), CDate(sDateTime)))
+            End If
+            
+            sDate = Format(sDateTime, DATE_FORMATTING_STRING)
+            sTime = Format(sDateTime, TIME_FORMATTING_STRING)
+            
+            sHH = Left(sTime, InStr(sTime, ":") - 1)
+            sMM = Mid(sTime, InStr(sTime, ":") + 1, 2)
+            sSS = Right(sTime, 2)
+            
+            'Channel 1 %
+            sCH1 = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH1_RATIO, 2))
+            'Channel 2 %
+            sCH2 = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH2_RATIO, 2))
+            'Channel 3 %
+            sCH3 = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH3_RATIO, 2))
+            'Channel 4 %
+            sCH4 = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH4_RATIO, 2))
+            'Channel 5 %
+            sCH5 = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH5_RATIO, 2))
+            'Channel 6 %
+            sCH6 = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH6_RATIO, 2))
+            
+            XCelSheet2.Cells(lRowCounter2, 1).Value = sDate
+            XCelSheet2.Cells(lRowCounter2, 2).Value = sHH
+            XCelSheet2.Cells(lRowCounter2, 3).Value = sMM
+            XCelSheet2.Cells(lRowCounter2, 4).Value = sSS
+            XCelSheet2.Cells(lRowCounter2, 5).Value = sCH1
+            XCelSheet2.Cells(lRowCounter2, 6).Value = sCH2
+            XCelSheet2.Cells(lRowCounter2, 7).Value = sCH3
+            XCelSheet2.Cells(lRowCounter2, 8).Value = sCH4
+            XCelSheet2.Cells(lRowCounter2, 9).Value = sCH5
+            XCelSheet2.Cells(lRowCounter2, 10).Value = sCH6
+            lRowCounter2 = lRowCounter2 + 1
+        Next iArrayRowCounter
         
     Next lRepeat
     
     
-    Close iFileNum
+    Close iLogFileNum
     Set XCelSheet1 = Nothing
     Set XCelSheet2 = Nothing
     
@@ -813,7 +869,7 @@ ERROR:
     
     'Protect Output worksheet
     XCelSheet2.Protect (PROTECT_PASSWORD)
-    Close iFileNum
+    Close iLogFileNum
     Set XCelSheet1 = Nothing
     Set XCelSheet2 = Nothing
     
