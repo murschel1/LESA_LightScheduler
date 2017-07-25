@@ -853,6 +853,32 @@ Public Sub WriteToOutputChaos()
             lRowCounter2 = lRowCounter2 + 1
         Next iArrayRowCounter
         
+        'Add row for dark period
+        sDateTime = CStr(DateAdd("s", dFrequency, CDate(sDateTime)))
+        
+        sDate = Format(sDateTime, DATE_FORMATTING_STRING)
+        sTime = Format(sDateTime, TIME_FORMATTING_STRING)
+            
+        sHH = Left(sTime, InStr(sTime, ":") - 1)
+        sMM = Mid(sTime, InStr(sTime, ":") + 1, 2)
+        sSS = Right(sTime, 2)
+        
+        XCelSheet2.Cells(lRowCounter2, 1).Value = sDate
+        XCelSheet2.Cells(lRowCounter2, 2).Value = sHH
+        XCelSheet2.Cells(lRowCounter2, 3).Value = sMM
+        XCelSheet2.Cells(lRowCounter2, 4).Value = sSS
+        XCelSheet2.Cells(lRowCounter2, 5).Value = CStr(-1)
+        XCelSheet2.Cells(lRowCounter2, 6).Value = CStr(-1)
+        XCelSheet2.Cells(lRowCounter2, 7).Value = CStr(-1)
+        XCelSheet2.Cells(lRowCounter2, 8).Value = CStr(-1)
+        XCelSheet2.Cells(lRowCounter2, 9).Value = CStr(-1)
+        XCelSheet2.Cells(lRowCounter2, 10).Value = CStr(-1)
+        
+        lRowCounter2 = lRowCounter2 + 1
+        
+        'Advance time for dark period
+        sDateTime = CStr(DateAdd("s", dDarkPeriod, CDate(sDateTime)))
+        
     Next lRepeat
     
     
