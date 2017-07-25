@@ -16,12 +16,13 @@ Const TIME_BETWEEN_REPEATS_ROW_NUMBER As Integer = 5
 Const FREQUENCY_UPPER_BOUND As Double = 4
 Const FREQUENCY_LOWER_BOUND As Double = 3
 Const CHAOS_EXPERIMENT_DURATION_ROW_NUMBER As Integer = 14
-Const CHAOS_PHOTO_PERIOD_ROW_NUMBER As Integer = 15
-Const CHAOS_DARK_PERIOD_ROW_NUMBER As Integer = 16
-Const CHAOS_X0_ROW_NUMBER As Integer = 17
-Const CHAOS_R_ROW_NUMBER As Integer = 18
-Const CHAOS_MD1_ROW_NUMBER As Integer = 19
-Const CHAOS_MD2_ROW_NUMBER As Integer = 20
+Const CHAOS_TIME_FROM_LAST_ROW_ROW_NUMBER As Integer = 15
+Const CHAOS_PHOTO_PERIOD_ROW_NUMBER As Integer = 16
+Const CHAOS_DARK_PERIOD_ROW_NUMBER As Integer = 17
+Const CHAOS_X0_ROW_NUMBER As Integer = 18
+Const CHAOS_R_ROW_NUMBER As Integer = 19
+Const CHAOS_MD1_ROW_NUMBER As Integer = 20
+Const CHAOS_MD2_ROW_NUMBER As Integer = 21
 Const CHAOS_START_DATETIME_ROW_NUMBER As Integer = 22
 Const LAST_COLUMN_LETTER As String = "J"
 Const DATE_FORMATTING_STRING As String = "yyyy-m-d"
@@ -44,12 +45,12 @@ Const MD1_LBOUND As Double = 0
 Const MD2_UBOUND As Double = 1
 Const MD2_LBOUND As Double = 0
 '*** NOTE: FUTURE VERSION SHOULD ALLOW USER ENTRY OF CHANNEL RATIOS AND MINIMUM CORRECTION ***
-Const CH1_RATIO As Double = 0 / 100
-Const CH2_RATIO As Double = 0 / 100
-Const CH3_RATIO As Double = 12 / 100
-Const CH4_RATIO As Double = 35 / 100
-Const CH5_RATIO As Double = 53 / 100
-Const CH6_RATIO As Double = 0 / 100
+Const CH1_RATIO As Double = 0 / 53
+Const CH2_RATIO As Double = 0 / 53
+Const CH3_RATIO As Double = 12 / 53
+Const CH4_RATIO As Double = 35 / 53
+Const CH5_RATIO As Double = 53 / 53
+Const CH6_RATIO As Double = 0 / 53
 Const MIN_CORRECTION As Double = 15
 '*********************************************************************************************'
 
@@ -557,13 +558,15 @@ Public Sub WriteToOutputChaos()
     Dim XCelWorkbook As Excel.Workbook
     Dim XCelSheet1 As Excel.Worksheet
     Dim XCelSheet2 As Excel.Worksheet
-    Dim lRowCounter1 As Long: lRowCounter1 = 0
-    Dim lRowCounter2 As Long: lRowCounter2 = 0
+    Dim lRowCounter1 As Long: lRowCounter1 = 2
+    Dim lRowCounter2 As Long: lRowCounter2 = 2
     Dim lNumberOfNonEmptyRowsSheet2 As Long: lNumberOfNonEmptyRowsSheet2 = 0
     Dim lFirstBlankRow As Long
     Dim vArrayChaos() As Variant
     Dim dExperimentDuration As Double: dExperimentDuration = 0
     Dim sExperimentDurationUnits As String
+    Dim dTimeFromLastRow As Double: dTimeFromLastRow = 0
+    Dim sTimeFromLastRowUnits As String
     Dim dPhotoPeriod As Double: dPhotoPeriod = 0
     Dim sPhotoPeriodUnits As String
     Dim dDarkPeriod As Double: dDarkPeriod = 0
@@ -712,10 +715,37 @@ Public Sub WriteToOutputChaos()
     'If there are rows on output worksheet, set start date for chaos commands to that date.
     'Otherwise, set it to user entered date in chaos section of input worksheet.
     If lNumberOfNonEmptyRowsSheet2 > 1 Then
-        sDateTime = Format(XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 1) & " " & _
-                     XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 2) & ":" & _
-                     XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 3) & ":" & _
-                     XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 4), DATE_FORMATTING_STRING & " " & TIME_FORMATTING_STRING)
+    
+        If (Len(Trim(XCelSheet1.Cells(CHAOS_TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1) Or _
+           (Len(Trim(XCelSheet1.Cells(CHAOS_TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1))) < 1) Then
+            
+            MsgBox "Please enter interval and units for time after last row.", vbExclamation, "Data Entry Error"
+            Exit Sub
+            
+        Else
+            dTimeFromLastRow = CDbl(Trim(XCelSheet1.Cells(CHAOS_TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER)))
+            sTimeFromLastRowUnits = Trim(XCelSheet1.Cells(CHAOS_TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1))
+            
+            Select Case sTimeFromLastRowUnits
+                Case "Weeks"
+                    dTimeFromLastRow = dTimeFromLastRow * 604800
+                Case "Days"
+                    dTimeFromLastRow = dTimeFromLastRow * 86400
+                Case "Hours"
+                    dTimeFromLastRow = dTimeFromLastRow * 3600
+                Case "Minutes"
+                    dTimeFromLastRow = dTimeFromLastRow * 60
+            End Select
+            
+            'Get start date/time from last row on output worksheet
+            sDateTime = Format(XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 1) & " " & _
+                         XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 2) & ":" & _
+                         XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 3) & ":" & _
+                         XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 4), DATE_FORMATTING_STRING & " " & TIME_FORMATTING_STRING)
+                         
+            'Advance start date/time by user entered time from last row
+            sDateTime = CStr(DateAdd("s", dTimeFromLastRow, CDate(sDateTime)))
+        End If
     Else
         sDateTime = Format(XCelSheet1.Cells(CHAOS_START_DATETIME_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER), DATE_FORMATTING_STRING & " " & TIME_FORMATTING_STRING)
     End If
