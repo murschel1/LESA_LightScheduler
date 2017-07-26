@@ -39,20 +39,22 @@ Const SESSION_NAME As String = "Raspberry_pi"
 Const X0_UBOUND As Double = 1
 Const X0_LBOUND As Double = 0
 Const R_UBOUND As Double = 4
-Const R_LBOUND As Double = 3.5
+Const R_LBOUND As Double = 3.7
 Const MD1_UBOUND As Double = 1
 Const MD1_LBOUND As Double = 0
 Const MD2_UBOUND As Double = 1
 Const MD2_LBOUND As Double = 0
-'*** NOTE: FUTURE VERSION SHOULD ALLOW USER ENTRY OF CHANNEL RATIOS AND MINIMUM CORRECTION ***
+'*** NOTE: FUTURE VERSION SHOULD ALLOW USER ENTRY OF FOLLOWING CONSTANTS *********************
 Const CH1_RATIO As Double = 0 / 53
 Const CH2_RATIO As Double = 0 / 53
 Const CH3_RATIO As Double = 12 / 53
 Const CH4_RATIO As Double = 35 / 53
 Const CH5_RATIO As Double = 53 / 53
-Const CH6_RATIO As Double = 0 / 53
+Const CH6_RATIO As Double = 11.8 / 53
 Const MIN_CORRECTION As Double = 15
+Const MAX_OUTPUT As Double = 5000
 '*********************************************************************************************'
+Const CHAOS_ROUNDING_DIGITS As Integer = 6
 
 Const RASP_PI_INTERFACE_NAME As String = "HortiLight_v1.1.py"
 Const RUNLIGHTCOMMAND_FILE_NAME As String = "RunLightCommand_v1.1.py"
@@ -582,7 +584,9 @@ Public Sub WriteToOutputChaos()
     Dim Pi As Double: Pi = 4 * Atn(1)
     Dim iLogFileNum As Integer: iLogFileNum = FreeFile
     Dim sLogFileName As String: sLogFileName = Application.ActiveWorkbook.Path & "\Chaos_log.txt"
-    Dim sCH1, sCH2, sCH3, sCH4, sCH5, sCH6 As String
+    Dim dCH1, dCH2, dCH3, dCH4, dCH5, dCH6 As Double
+    Dim dCH1Output, dCH2Output, dCH3Output, dCH4Output, dCH5Output, dCH6Output As Double
+    Dim dTotalOutput As Double
     
     '---------------------
     'OBJECT INITIALIZATION
@@ -787,9 +791,9 @@ Public Sub WriteToOutputChaos()
                         vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = iArrayRowCounter
                     Case 2
                         If iArrayRowCounter = 1 Then
-                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Application.WorksheetFunction.RoundUp((dR * dX0 * (1 - dX0)), 4)
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Application.WorksheetFunction.RoundUp((dR * dX0 * (1 - dX0)), CHAOS_ROUNDING_DIGITS)
                         Else
-                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Application.WorksheetFunction.RoundUp(dR * vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter) * (1 - vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter)), 4)
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Application.WorksheetFunction.RoundUp(dR * vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter) * (1 - vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter)), CHAOS_ROUNDING_DIGITS)
                         End If
                     Case 3
                         vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Sin(vArrayChaos(iArrayRowCounter, 1) * Pi / 300)
@@ -828,7 +832,7 @@ Public Sub WriteToOutputChaos()
         
         'Output chaos array to log file
         'Heading
-        sLine = "Array " & lRepeat & " (r=" & dR & ", X0=" & dX0 & ", MD1=" & dMD1 & ", MD2=" & dMD2 & ", F=" & dFrequency & ")"
+        sLine = "Photoperiod " & lRepeat & " (r=" & dR & ", X0=" & dX0 & ", MD1=" & dMD1 & ", MD2=" & dMD2 & ", F=" & dFrequency & ")"
         Print #iLogFileNum, sLine
         sLine = "Theta,Chaos,Sin(Theta),Damp,Time,Time&MaxDamp,FinalChaos,FinalChaos*100%"
         Print #iLogFileNum, sLine
@@ -843,7 +847,9 @@ Public Sub WriteToOutputChaos()
             Print #iLogFileNum, sLine
         Next iArrayRowCounter
         
-        'Write to output worksheet
+        '*** BUILD OUTPUT ARRAY ***
+        
+        'Write output array to worksheet
         For iArrayRowCounter = 1 To 300
             'Date and Time
             If iArrayRowCounter > 1 Then
@@ -858,28 +864,50 @@ Public Sub WriteToOutputChaos()
             sSS = Right(sTime, 2)
             
             'Channel 1 %
-            sCH1 = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH1_RATIO, 2))
+            dCH1 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH1_RATIO, 2))
             'Channel 2 %
-            sCH2 = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH2_RATIO, 2))
+            dCH2 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH2_RATIO, 2))
             'Channel 3 %
-            sCH3 = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH3_RATIO, 2))
+            dCH3 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH3_RATIO, 2))
             'Channel 4 %
-            sCH4 = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH4_RATIO, 2))
+            dCH4 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH4_RATIO, 2))
             'Channel 5 %
-            sCH5 = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH5_RATIO, 2))
+            dCH5 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH5_RATIO, 2))
             'Channel 6 %
-            sCH6 = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH6_RATIO, 2))
+            dCH6 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH6_RATIO, 2))
+            
+            'Adjust channel % for max photons
+            
+            'Calculate output photons of each channel (micromol photons / m^2)
+            dCH1Output = (1.9726 * dCH1 - 16.916) * dFrequency
+            dCH2Output = (2.4582 * dCH2 - 15.204) * dFrequency
+            dCH3Output = (3.1604 * dCH3 - 8.6614) * dFrequency
+            dCH4Output = ((-0.0076 * (dCH4 ^ 2)) + (2.2092 * dCH4) - 16.318) * dFrequency
+            dCH5Output = (3.807 * dCH5 - 32.702) * dFrequency
+            dCH6Output = (2.4158 * dCH6 - 17.079) * dFrequency
+            
+            'Calculate total photons for all channels
+            dTotalOutput = dCH1Output + dCH2Output + dCH3Output + dCH4Output + dCH5Output + dCH6Output
+            
+            'Adjust percentages
+            dCH1 = dCH1 * (dTotalOutput / MAX_OUTPUT)
+            dCH2 = dCH2 * (dTotalOutput / MAX_OUTPUT)
+            dCH3 = dCH3 * (dTotalOutput / MAX_OUTPUT)
+            dCH4 = dCH4 * (dTotalOutput / MAX_OUTPUT)
+            dCH5 = dCH5 * (dTotalOutput / MAX_OUTPUT)
+            dCH6 = dCH6 * (dTotalOutput / MAX_OUTPUT)
+            
             
             XCelSheet2.Cells(lRowCounter2, 1).Value = sDate
             XCelSheet2.Cells(lRowCounter2, 2).Value = sHH
             XCelSheet2.Cells(lRowCounter2, 3).Value = sMM
             XCelSheet2.Cells(lRowCounter2, 4).Value = sSS
-            XCelSheet2.Cells(lRowCounter2, 5).Value = sCH1
-            XCelSheet2.Cells(lRowCounter2, 6).Value = sCH2
-            XCelSheet2.Cells(lRowCounter2, 7).Value = sCH3
-            XCelSheet2.Cells(lRowCounter2, 8).Value = sCH4
-            XCelSheet2.Cells(lRowCounter2, 9).Value = sCH5
-            XCelSheet2.Cells(lRowCounter2, 10).Value = sCH6
+            XCelSheet2.Cells(lRowCounter2, 5).Value = CStr(Application.WorksheetFunction.RoundUp(dCH1, 2))
+            XCelSheet2.Cells(lRowCounter2, 6).Value = CStr(Application.WorksheetFunction.RoundUp(dCH2, 2))
+            XCelSheet2.Cells(lRowCounter2, 7).Value = CStr(Application.WorksheetFunction.RoundUp(dCH3, 2))
+            XCelSheet2.Cells(lRowCounter2, 8).Value = CStr(Application.WorksheetFunction.RoundUp(dCH4, 2))
+            XCelSheet2.Cells(lRowCounter2, 9).Value = CStr(Application.WorksheetFunction.RoundUp(dCH5, 2))
+            XCelSheet2.Cells(lRowCounter2, 10).Value = CStr(Application.WorksheetFunction.RoundUp(dCH6, 2))
             lRowCounter2 = lRowCounter2 + 1
         Next iArrayRowCounter
         
@@ -1629,3 +1657,4 @@ Private Function CommonDataValidation(xCelSheet As Excel.Worksheet) As Boolean
     
     CommonDataValidation = True
 End Function
+
