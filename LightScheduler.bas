@@ -24,6 +24,7 @@ Const CHAOS_R_ROW_NUMBER As Integer = 19
 Const CHAOS_MD1_ROW_NUMBER As Integer = 20
 Const CHAOS_MD2_ROW_NUMBER As Integer = 21
 Const CHAOS_START_DATETIME_ROW_NUMBER As Integer = 22
+Const CHAOS_ARRAY_NUM_COLUMNS As Integer = 18
 Const LAST_COLUMN_LETTER As String = "J"
 Const DATE_FORMATTING_STRING As String = "yyyy-m-d"
 Const TIME_FORMATTING_STRING As String = "H:mm:ss"
@@ -45,14 +46,19 @@ Const MD1_LBOUND As Double = 0
 Const MD2_UBOUND As Double = 1
 Const MD2_LBOUND As Double = 0
 '*** NOTE: FUTURE VERSION SHOULD ALLOW USER ENTRY OF FOLLOWING CONSTANTS *********************
-Const CH1_RATIO As Double = 0 / 53
-Const CH2_RATIO As Double = 0 / 53
-Const CH3_RATIO As Double = 12 / 53
-Const CH4_RATIO As Double = 35 / 53
-Const CH5_RATIO As Double = 53 / 53
-Const CH6_RATIO As Double = 11.8 / 53
-Const MIN_CORRECTION As Double = 15
-Const MAX_OUTPUT As Double = 5000
+Const CH1_RATIO As Double = 0
+Const CH2_RATIO As Double = 0
+Const CH3_RATIO As Double = 25
+Const CH4_RATIO As Double = 30
+Const CH5_RATIO As Double = 45
+Const CH6_RATIO As Double = 0
+Const MIN_PERCENT1 As Double = 0
+Const MIN_PERCENT2 As Double = 0
+Const MIN_PERCENT3 As Double = 12
+Const MIN_PERCENT4 As Double = 15
+Const MIN_PERCENT5 As Double = 15
+Const MIN_PERCENT6 As Double = 0
+Const TOTAL_OUTPUT As Double = 15000000 'micromol photons/m2/day
 '*********************************************************************************************'
 Const CHAOS_ROUNDING_DIGITS As Integer = 6
 
@@ -756,7 +762,10 @@ Public Sub WriteToOutputChaos()
     
     For lRepeat = 1 To lNumberOfRepetitions
         'Redim chaos array for current repeat
-        ReDim vArrayChaos(1 To 300, 1 To 8)
+        ReDim vArrayChaos(1 To 300, 1 To CHAOS_ARRAY_NUM_COLUMNS)
+        
+        'Set total output for all channels to zero
+        dTotalOutput = 0
         
         'Randomize variables (if specified by user)
         'X0
@@ -830,7 +839,7 @@ Public Sub WriteToOutputChaos()
             Next iArrayRowCounter
         Next iArrayColumnCounter
         
-        'Output chaos array to log file
+        'Output chaos calculation data to log file
         'Heading
         sLine = "Photoperiod " & lRepeat & " (r=" & dR & ", X0=" & dX0 & ", MD1=" & dMD1 & ", MD2=" & dMD2 & ", F=" & dFrequency & ")"
         Print #iLogFileNum, sLine
@@ -847,9 +856,7 @@ Public Sub WriteToOutputChaos()
             Print #iLogFileNum, sLine
         Next iArrayRowCounter
         
-        '*** BUILD OUTPUT ARRAY ***
-        
-        'Write output array to worksheet
+        'Populate chaos array with worksheet output values
         For iArrayRowCounter = 1 To 300
             'Date and Time
             If iArrayRowCounter > 1 Then
@@ -864,17 +871,23 @@ Public Sub WriteToOutputChaos()
             sSS = Right(sTime, 2)
             
             'Channel 1 %
-            dCH1 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH1_RATIO, 2))
+            dCH1 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * (CH1_RATIO / _
+                   Application.WorksheetFunction.Max(CH1_RATIO, CH2_RATIO, CH3_RATIO, CH4_RATIO, CH5_RATIO, CH6_RATIO)), 2))
             'Channel 2 %
-            dCH2 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH2_RATIO, 2))
+            dCH2 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * (CH2_RATIO / _
+                   Application.WorksheetFunction.Max(CH1_RATIO, CH2_RATIO, CH3_RATIO, CH4_RATIO, CH5_RATIO, CH6_RATIO)), 2))
             'Channel 3 %
-            dCH3 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH3_RATIO, 2))
+            dCH3 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * (CH3_RATIO / _
+                   Application.WorksheetFunction.Max(CH1_RATIO, CH2_RATIO, CH3_RATIO, CH4_RATIO, CH5_RATIO, CH6_RATIO)), 2))
             'Channel 4 %
-            dCH4 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH4_RATIO, 2))
+            dCH4 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * (CH4_RATIO / _
+                   Application.WorksheetFunction.Max(CH1_RATIO, CH2_RATIO, CH3_RATIO, CH4_RATIO, CH5_RATIO, CH6_RATIO)), 2))
             'Channel 5 %
-            dCH5 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH5_RATIO, 2))
+            dCH5 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * (CH5_RATIO / _
+                   Application.WorksheetFunction.Max(CH1_RATIO, CH2_RATIO, CH3_RATIO, CH4_RATIO, CH5_RATIO, CH6_RATIO)), 2))
             'Channel 6 %
-            dCH6 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * CH6_RATIO, 2))
+            dCH6 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * (CH6_RATIO / _
+                   Application.WorksheetFunction.Max(CH1_RATIO, CH2_RATIO, CH3_RATIO, CH4_RATIO, CH5_RATIO, CH6_RATIO)), 2))
             
             'Adjust channel % for max photons
             
@@ -886,29 +899,80 @@ Public Sub WriteToOutputChaos()
             dCH5Output = (3.807 * dCH5 - 32.702) * dFrequency
             dCH6Output = (2.4158 * dCH6 - 17.079) * dFrequency
             
-            'Calculate total photons for all channels
-            dTotalOutput = dCH1Output + dCH2Output + dCH3Output + dCH4Output + dCH5Output + dCH6Output
+            If dCH1Output < 0 Then
+                dCH1Output = 0
+            End If
             
-            'Adjust percentages
-            dCH1 = dCH1 * (dTotalOutput / MAX_OUTPUT)
-            dCH2 = dCH2 * (dTotalOutput / MAX_OUTPUT)
-            dCH3 = dCH3 * (dTotalOutput / MAX_OUTPUT)
-            dCH4 = dCH4 * (dTotalOutput / MAX_OUTPUT)
-            dCH5 = dCH5 * (dTotalOutput / MAX_OUTPUT)
-            dCH6 = dCH6 * (dTotalOutput / MAX_OUTPUT)
+            If dCH2Output < 0 Then
+                dCH2Output = 0
+            End If
             
+            If dCH3Output < 0 Then
+                dCH3Output = 0
+            End If
             
-            XCelSheet2.Cells(lRowCounter2, 1).Value = sDate
-            XCelSheet2.Cells(lRowCounter2, 2).Value = sHH
-            XCelSheet2.Cells(lRowCounter2, 3).Value = sMM
-            XCelSheet2.Cells(lRowCounter2, 4).Value = sSS
-            XCelSheet2.Cells(lRowCounter2, 5).Value = CStr(Application.WorksheetFunction.RoundUp(dCH1, 2))
-            XCelSheet2.Cells(lRowCounter2, 6).Value = CStr(Application.WorksheetFunction.RoundUp(dCH2, 2))
-            XCelSheet2.Cells(lRowCounter2, 7).Value = CStr(Application.WorksheetFunction.RoundUp(dCH3, 2))
-            XCelSheet2.Cells(lRowCounter2, 8).Value = CStr(Application.WorksheetFunction.RoundUp(dCH4, 2))
-            XCelSheet2.Cells(lRowCounter2, 9).Value = CStr(Application.WorksheetFunction.RoundUp(dCH5, 2))
-            XCelSheet2.Cells(lRowCounter2, 10).Value = CStr(Application.WorksheetFunction.RoundUp(dCH6, 2))
+            If dCH4Output < 0 Then
+                dCH4Output = 0
+            End If
+            
+            If dCH5Output < 0 Then
+                dCH5Output = 0
+            End If
+            
+            If dCH6Output < 0 Then
+                dCH6Output = 0
+            End If
+            
+            'Add output from this row to total output for all channels, all rows
+            dTotalOutput = dTotalOutput + dCH1Output + dCH2Output + dCH3Output + dCH4Output + dCH5Output + dCH6Output
+            
+            'Set output date/time and uncorrected channel %
+            vArrayChaos(iArrayRowCounter, 9) = sDate
+            vArrayChaos(iArrayRowCounter, 10) = sHH
+            vArrayChaos(iArrayRowCounter, 11) = sMM
+            vArrayChaos(iArrayRowCounter, 12) = sSS
+            vArrayChaos(iArrayRowCounter, 13) = dCH1
+            vArrayChaos(iArrayRowCounter, 14) = dCH2
+            vArrayChaos(iArrayRowCounter, 15) = dCH3
+            vArrayChaos(iArrayRowCounter, 16) = dCH4
+            vArrayChaos(iArrayRowCounter, 17) = dCH5
+            vArrayChaos(iArrayRowCounter, 18) = dCH6
+            
+        Next iArrayRowCounter
+        
+        'Write worksheet values to output worksheet
+        For iArrayRowCounter = 1 To 300
+        
+            'Adjust channel percentages based on desired output
+            vArrayChaos(iArrayRowCounter, 13) = vArrayChaos(iArrayRowCounter, 13) * (TOTAL_OUTPUT / dTotalOutput)
+            vArrayChaos(iArrayRowCounter, 14) = vArrayChaos(iArrayRowCounter, 14) * (TOTAL_OUTPUT / dTotalOutput)
+            vArrayChaos(iArrayRowCounter, 15) = vArrayChaos(iArrayRowCounter, 15) * (TOTAL_OUTPUT / dTotalOutput)
+            vArrayChaos(iArrayRowCounter, 16) = vArrayChaos(iArrayRowCounter, 16) * (TOTAL_OUTPUT / dTotalOutput)
+            vArrayChaos(iArrayRowCounter, 17) = vArrayChaos(iArrayRowCounter, 17) * (TOTAL_OUTPUT / dTotalOutput)
+            vArrayChaos(iArrayRowCounter, 18) = vArrayChaos(iArrayRowCounter, 18) * (TOTAL_OUTPUT / dTotalOutput)
+            
+            'Adjust channel percentages based on minimum percent per channel
+            vArrayChaos(iArrayRowCounter, 13) = ((vArrayChaos(iArrayRowCounter, 13) / 100) * (100 - MIN_PERCENT1)) + MIN_PERCENT1
+            vArrayChaos(iArrayRowCounter, 14) = ((vArrayChaos(iArrayRowCounter, 14) / 100) * (100 - MIN_PERCENT2)) + MIN_PERCENT2
+            vArrayChaos(iArrayRowCounter, 15) = ((vArrayChaos(iArrayRowCounter, 15) / 100) * (100 - MIN_PERCENT3)) + MIN_PERCENT3
+            vArrayChaos(iArrayRowCounter, 16) = ((vArrayChaos(iArrayRowCounter, 16) / 100) * (100 - MIN_PERCENT4)) + MIN_PERCENT4
+            vArrayChaos(iArrayRowCounter, 17) = ((vArrayChaos(iArrayRowCounter, 17) / 100) * (100 - MIN_PERCENT5)) + MIN_PERCENT5
+            vArrayChaos(iArrayRowCounter, 18) = ((vArrayChaos(iArrayRowCounter, 18) / 100) * (100 - MIN_PERCENT6)) + MIN_PERCENT6
+        
+            'Output array to worksheet
+            XCelSheet2.Cells(lRowCounter2, 1).Value = CStr(vArrayChaos(iArrayRowCounter, 9)) 'Date
+            XCelSheet2.Cells(lRowCounter2, 2).Value = CStr(vArrayChaos(iArrayRowCounter, 10)) 'Hours
+            XCelSheet2.Cells(lRowCounter2, 3).Value = CStr(vArrayChaos(iArrayRowCounter, 11)) 'Minutes
+            XCelSheet2.Cells(lRowCounter2, 4).Value = CStr(vArrayChaos(iArrayRowCounter, 12)) 'Seconds
+            XCelSheet2.Cells(lRowCounter2, 5).Value = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 13), 2)) 'CH1 %
+            XCelSheet2.Cells(lRowCounter2, 6).Value = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 14), 2)) 'CH2 %
+            XCelSheet2.Cells(lRowCounter2, 7).Value = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 15), 2)) 'CH3 %
+            XCelSheet2.Cells(lRowCounter2, 8).Value = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 16), 2)) 'CH4 %
+            XCelSheet2.Cells(lRowCounter2, 9).Value = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 17), 2)) 'CH5 %
+            XCelSheet2.Cells(lRowCounter2, 10).Value = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 18), 2)) 'CH6 %
+            
             lRowCounter2 = lRowCounter2 + 1
+            
         Next iArrayRowCounter
         
         'Add row for dark period
