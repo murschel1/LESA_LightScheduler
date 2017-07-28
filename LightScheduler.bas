@@ -592,7 +592,7 @@ Public Sub WriteToOutputChaos()
     Dim sLogFileName As String: sLogFileName = Application.ActiveWorkbook.Path & "\Chaos_log.txt"
     Dim dCH1, dCH2, dCH3, dCH4, dCH5, dCH6 As Double
     Dim dCH1Output, dCH2Output, dCH3Output, dCH4Output, dCH5Output, dCH6Output As Double
-    Dim dTotalOutput As Double
+    Dim dTotalOutput, dDesiredTotalOutput As Double
     
     '---------------------
     'OBJECT INITIALIZATION
@@ -943,13 +943,16 @@ Public Sub WriteToOutputChaos()
         'Write worksheet values to output worksheet
         For iArrayRowCounter = 1 To 300
         
+            '((Application.WorksheetFunction.Max(MIN_PERCENT1,MIN_PERCENT2,MIN_PERCENT3,MIN_PERCENT4,MIN_PERCENT5,MIN_PERCENT6)/100) * TOTAL_OUTPUT)
+            dDesiredTotalOutput = TOTAL_OUTPUT - ((Application.WorksheetFunction.Sum(MIN_PERCENT1, MIN_PERCENT2, MIN_PERCENT3, MIN_PERCENT4, MIN_PERCENT5, MIN_PERCENT6) / 100) * TOTAL_OUTPUT)
+        
             'Adjust channel percentages based on desired output
-            vArrayChaos(iArrayRowCounter, 13) = vArrayChaos(iArrayRowCounter, 13) * (TOTAL_OUTPUT / dTotalOutput)
-            vArrayChaos(iArrayRowCounter, 14) = vArrayChaos(iArrayRowCounter, 14) * (TOTAL_OUTPUT / dTotalOutput)
-            vArrayChaos(iArrayRowCounter, 15) = vArrayChaos(iArrayRowCounter, 15) * (TOTAL_OUTPUT / dTotalOutput)
-            vArrayChaos(iArrayRowCounter, 16) = vArrayChaos(iArrayRowCounter, 16) * (TOTAL_OUTPUT / dTotalOutput)
-            vArrayChaos(iArrayRowCounter, 17) = vArrayChaos(iArrayRowCounter, 17) * (TOTAL_OUTPUT / dTotalOutput)
-            vArrayChaos(iArrayRowCounter, 18) = vArrayChaos(iArrayRowCounter, 18) * (TOTAL_OUTPUT / dTotalOutput)
+            vArrayChaos(iArrayRowCounter, 13) = vArrayChaos(iArrayRowCounter, 13) * dDesiredTotalOutput / dTotalOutput
+            vArrayChaos(iArrayRowCounter, 14) = vArrayChaos(iArrayRowCounter, 14) * dDesiredTotalOutput / dTotalOutput
+            vArrayChaos(iArrayRowCounter, 15) = vArrayChaos(iArrayRowCounter, 15) * dDesiredTotalOutput / dTotalOutput
+            vArrayChaos(iArrayRowCounter, 16) = vArrayChaos(iArrayRowCounter, 16) * dDesiredTotalOutput / dTotalOutput
+            vArrayChaos(iArrayRowCounter, 17) = vArrayChaos(iArrayRowCounter, 17) * dDesiredTotalOutput / dTotalOutput
+            vArrayChaos(iArrayRowCounter, 18) = vArrayChaos(iArrayRowCounter, 18) * dDesiredTotalOutput / dTotalOutput
             
             'Adjust channel percentages based on minimum percent per channel
             vArrayChaos(iArrayRowCounter, 13) = ((vArrayChaos(iArrayRowCounter, 13) / 100) * (100 - MIN_PERCENT1)) + MIN_PERCENT1
