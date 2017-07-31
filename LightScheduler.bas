@@ -592,7 +592,8 @@ Public Sub WriteToOutputChaos()
     Dim sLogFileName As String: sLogFileName = Application.ActiveWorkbook.Path & "\Chaos_log.txt"
     Dim dCH1, dCH2, dCH3, dCH4, dCH5, dCH6 As Double
     Dim dCH1Output, dCH2Output, dCH3Output, dCH4Output, dCH5Output, dCH6Output As Double
-    Dim dTotalOutput, dDesiredTotalOutput As Double
+    Dim dTotalOutput, dTotalOutputCH1, dTotalOutputCH2, dTotalOutputCH3, dTotalOutputCH4, dTotalOutputCH5, dTotalOutputCH6, dDesiredTotalOutput As Double
+    Dim dAdjustedTotalOutput, dAdjustedTotalOutputCH1, dAdjustedTotalOutputCH2, dAdjustedTotalOutputCH3, dAdjustedTotalOutputCH4, dAdjustedTotalOutputCH5, dAdjustedTotalOutputCH6 As Double
     
     '---------------------
     'OBJECT INITIALIZATION
@@ -766,6 +767,21 @@ Public Sub WriteToOutputChaos()
         
         'Set total output for all channels to zero
         dTotalOutput = 0
+        dTotalOutputCH1 = 0
+        dTotalOutputCH2 = 0
+        dTotalOutputCH3 = 0
+        dTotalOutputCH4 = 0
+        dTotalOutputCH5 = 0
+        dTotalOutputCH6 = 0
+        
+        dAdjustedTotalOutputCH1 = 0
+        dAdjustedTotalOutputCH2 = 0
+        dAdjustedTotalOutputCH3 = 0
+        dAdjustedTotalOutputCH4 = 0
+        dAdjustedTotalOutputCH5 = 0
+        dAdjustedTotalOutputCH6 = 0
+        dAdjustedTotalOutput = 0
+        
         
         'Randomize variables (if specified by user)
         'X0
@@ -925,6 +941,12 @@ Public Sub WriteToOutputChaos()
             
             'Add output from this row to total output for all channels, all rows
             dTotalOutput = dTotalOutput + dCH1Output + dCH2Output + dCH3Output + dCH4Output + dCH5Output + dCH6Output
+            dTotalOutputCH1 = dTotalOutputCH1 + dCH1Output
+            dTotalOutputCH2 = dTotalOutputCH2 + dCH2Output
+            dTotalOutputCH3 = dTotalOutputCH3 + dCH3Output
+            dTotalOutputCH4 = dTotalOutputCH4 + dCH4Output
+            dTotalOutputCH5 = dTotalOutputCH5 + dCH5Output
+            dTotalOutputCH6 = dTotalOutputCH6 + dCH6Output
             
             'Set output date/time and uncorrected channel %
             vArrayChaos(iArrayRowCounter, 9) = sDate
@@ -954,6 +976,8 @@ Public Sub WriteToOutputChaos()
             vArrayChaos(iArrayRowCounter, 17) = vArrayChaos(iArrayRowCounter, 17) * dDesiredTotalOutput / dTotalOutput
             vArrayChaos(iArrayRowCounter, 18) = vArrayChaos(iArrayRowCounter, 18) * dDesiredTotalOutput / dTotalOutput
             
+            
+            
             'Adjust channel percentages based on minimum percent per channel
             vArrayChaos(iArrayRowCounter, 13) = ((vArrayChaos(iArrayRowCounter, 13) / 100) * (100 - MIN_PERCENT1)) + MIN_PERCENT1
             vArrayChaos(iArrayRowCounter, 14) = ((vArrayChaos(iArrayRowCounter, 14) / 100) * (100 - MIN_PERCENT2)) + MIN_PERCENT2
@@ -961,6 +985,35 @@ Public Sub WriteToOutputChaos()
             vArrayChaos(iArrayRowCounter, 16) = ((vArrayChaos(iArrayRowCounter, 16) / 100) * (100 - MIN_PERCENT4)) + MIN_PERCENT4
             vArrayChaos(iArrayRowCounter, 17) = ((vArrayChaos(iArrayRowCounter, 17) / 100) * (100 - MIN_PERCENT5)) + MIN_PERCENT5
             vArrayChaos(iArrayRowCounter, 18) = ((vArrayChaos(iArrayRowCounter, 18) / 100) * (100 - MIN_PERCENT6)) + MIN_PERCENT6
+            
+           
+            'Add output from this row to total output for all channels, all rows
+            
+            If ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * dFrequency) > 0 Then
+                dAdjustedTotalOutputCH1 = dAdjustedTotalOutputCH1 + ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * dFrequency)
+            End If
+            
+            If ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * dFrequency) > 0 Then
+                dAdjustedTotalOutputCH2 = dAdjustedTotalOutputCH2 + ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * dFrequency)
+            End If
+            
+            If ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * dFrequency) > 0 Then
+                dAdjustedTotalOutputCH3 = dAdjustedTotalOutputCH3 + ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * dFrequency)
+            End If
+            
+            If (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * dFrequency) > 0 Then
+                dAdjustedTotalOutputCH4 = dAdjustedTotalOutputCH4 + (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * dFrequency)
+            End If
+            
+            If ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * dFrequency) > 0 Then
+                dAdjustedTotalOutputCH5 = dAdjustedTotalOutputCH5 + ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * dFrequency)
+            End If
+            
+            If ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * dFrequency) > 0 Then
+                dAdjustedTotalOutputCH6 = dAdjustedTotalOutputCH6 + ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * dFrequency)
+            End If
+            
+            
         
             'Output array to worksheet
             XCelSheet2.Cells(lRowCounter2, 1).Value = CStr(vArrayChaos(iArrayRowCounter, 9)) 'Date
@@ -977,6 +1030,8 @@ Public Sub WriteToOutputChaos()
             lRowCounter2 = lRowCounter2 + 1
             
         Next iArrayRowCounter
+        
+        dAdjustedTotalOutput = dAdjustedTotalOutputCH1 + dAdjustedTotalOutputCH2 + dAdjustedTotalOutputCH3 + dAdjustedTotalOutputCH4 + dAdjustedTotalOutputCH5 + dAdjustedTotalOutputCH6
         
         'Add row for dark period
         sDateTime = CStr(DateAdd("s", dFrequency, CDate(sDateTime)))
@@ -1003,6 +1058,13 @@ Public Sub WriteToOutputChaos()
         
         'Advance time for dark period
         sDateTime = CStr(DateAdd("s", dDarkPeriod, CDate(sDateTime)))
+        
+        'Print total output per channel and overall to log file
+        sLine = "Unadjusted output: CH1 Output = " & dTotalOutputCH1 & ", CH2 Output = " & dTotalOutputCH2 & ", CH3 Output = " & dTotalOutputCH3 & ", CH4 Output = " & dTotalOutputCH4 & ",  CH5 Output = " & dTotalOutputCH5 & ", CH6 Output = " & dTotalOutputCH6 & ", " & "Total output = " & dTotalOutput
+        Print #iLogFileNum, sLine
+        sLine = "Adjusted output: CH1 Output = " & dAdjustedTotalOutputCH1 & ", CH2 Output = " & dAdjustedTotalOutputCH2 & ", CH3 Output = " & dAdjustedTotalOutputCH3 & ", CH4 Output = " & dAdjustedTotalOutputCH4 & ",  CH5 Output = " & dAdjustedTotalOutputCH5 & ", CH6 Output = " & dAdjustedTotalOutputCH6 & ", " & "Total output = " & dAdjustedTotalOutput
+        Print #iLogFileNum, sLine
+        sLine = ""
         
     Next lRepeat
     
