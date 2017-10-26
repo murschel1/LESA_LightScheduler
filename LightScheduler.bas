@@ -10,6 +10,21 @@ Const LAST_ROW_EXECUTION_TIME_UNITS_CELL_NUMBER = 14
 Const LAST_ROW_EXECUTION_TIME_ROW_NUMBER = 7
 Const REPEAT_INTERVAL_CELL_NUMBER As Integer = 14
 Const REPEAT_UNITS_CELL_NUMBER As Integer = 15
+Const REPEAT_PATTERN_ROW_NUMBER As Integer = 3
+Const TIME_FROM_LAST_ROW_ROW_NUMBER As Integer = 4
+Const TIME_BETWEEN_REPEATS_ROW_NUMBER As Integer = 5
+Const FREQUENCY_UPPER_BOUND As Double = 4
+Const FREQUENCY_LOWER_BOUND As Double = 3
+Const CHAOS_EXPERIMENT_DURATION_ROW_NUMBER As Integer = 14
+Const CHAOS_TIME_FROM_LAST_ROW_ROW_NUMBER As Integer = 15
+Const CHAOS_PHOTO_PERIOD_ROW_NUMBER As Integer = 16
+Const CHAOS_DARK_PERIOD_ROW_NUMBER As Integer = 17
+Const CHAOS_X0_ROW_NUMBER As Integer = 18
+Const CHAOS_R_ROW_NUMBER As Integer = 19
+Const CHAOS_MD1_ROW_NUMBER As Integer = 20
+Const CHAOS_MD2_ROW_NUMBER As Integer = 21
+Const CHAOS_START_DATETIME_ROW_NUMBER As Integer = 22
+Const CHAOS_ARRAY_NUM_COLUMNS As Integer = 18
 Const LAST_COLUMN_LETTER As String = "J"
 Const DATE_FORMATTING_STRING As String = "yyyy-m-d"
 Const TIME_FORMATTING_STRING As String = "H:mm:ss"
@@ -22,18 +37,44 @@ Const WINSCP_PATH As String = "C:\Program Files (x86)\WinSCP\"
 Const QUOTATION As String = """"
 Const HOST_KEY As String = "ssh-rsa 2048 13:f0:b2:db:93:db:9d:30:6b:1a:b6:ac:15:76:dc:c3"
 Const SESSION_NAME As String = "Raspberry_pi"
+Const X0_UBOUND As Double = 1
+Const X0_LBOUND As Double = 0
+Const R_UBOUND As Double = 4
+Const R_LBOUND As Double = 3.9
+Const MD1_UBOUND As Double = 0.5
+Const MD1_LBOUND As Double = 0
+Const MD2_UBOUND As Double = 0.5
+Const MD2_LBOUND As Double = 0
+'*** NOTE: FUTURE VERSION SHOULD ALLOW USER ENTRY OF FOLLOWING CONSTANTS *********************
+Const CH1_RATIO As Double = 0
+Const CH2_RATIO As Double = 0
+Const CH3_RATIO As Double = 20
+Const CH4_RATIO As Double = 20
+Const CH5_RATIO As Double = 60
+Const CH6_RATIO As Double = 12
+Const MIN_PERCENT1 As Double = 0
+Const MIN_PERCENT2 As Double = 0
+Const MIN_PERCENT3 As Double = 0
+Const MIN_PERCENT4 As Double = 0
+Const MIN_PERCENT5 As Double = 0
+Const MIN_PERCENT6 As Double = 0
+Const TOTAL_OUTPUT As Double = 10000000 'micromol photons/m2/day (or photoperiod)
+Const CHAOS_BASE_FUNCTION As Integer = 0 '0 = flat line, 1 = sine wave
+'*********************************************************************************************'
+Const CHAOS_ROUNDING_DIGITS As Integer = 6
+
 Const RASP_PI_INTERFACE_NAME As String = "HortiLight_v1.1.py"
 Const RUNLIGHTCOMMAND_FILE_NAME As String = "RunLightCommand_v1.1.py"
 
 '------------------------------------------------------------------------------------------------------------
-'Sub: WriteToOutput
+'Sub: WriteToOutputPattern
 'Coded by: Matt Urschel
 'Date : 3 May 2017
 'Description: Code for button "Write To Output" on Input worksheet - Appends user-entered rows on Input
 '             page to end of data on Output page, with start time after a user-entered interval since
 '             last line. Repeats pattern for user-specified time interval (times are automatically advanced).
 '------------------------------------------------------------------------------------------------------------
-Public Sub WriteToOutput()
+Public Sub WriteToOutputPattern()
     On Error GoTo ERROR
 
    
@@ -82,13 +123,13 @@ Public Sub WriteToOutput()
     lRowCounter1 = 2
     
     'Get contents of interval cell if changed
-    If Len(Trim(XCelSheet1.Cells(lRowCounter1, REPEAT_INTERVAL_CELL_NUMBER))) > 0 Then
-       lRepeatInterval = CLng(XCelSheet1.Cells(lRowCounter1, REPEAT_INTERVAL_CELL_NUMBER))
+    If Len(Trim(XCelSheet1.Cells(REPEAT_PATTERN_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) > 0 Then
+       lRepeatInterval = CLng(XCelSheet1.Cells(REPEAT_PATTERN_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'Get contents of unit cell if changed
-    If Len(Trim(XCelSheet1.Cells(lRowCounter1, REPEAT_UNITS_CELL_NUMBER))) > 0 Then
-       sRepeatUnit = Trim(XCelSheet1.Cells(lRowCounter1, REPEAT_UNITS_CELL_NUMBER))
+    If Len(Trim(XCelSheet1.Cells(REPEAT_PATTERN_ROW_NUMBER, REPEAT_UNITS_CELL_NUMBER))) > 0 Then
+       sRepeatUnit = Trim(XCelSheet1.Cells(REPEAT_PATTERN_ROW_NUMBER, REPEAT_UNITS_CELL_NUMBER))
        
        'Convert interval unit to string for DateAdd function and convert repeat interval to seconds for later comparison to pattern interval
        Select Case sRepeatUnit
@@ -113,13 +154,13 @@ Public Sub WriteToOutput()
     End If
     
     'Get contents of time after last row interval cell if changed
-    If Len(Trim(XCelSheet1.Cells(lRowCounter1 + 1, REPEAT_INTERVAL_CELL_NUMBER))) > 0 Then
-       lTimeAfterLastRowInterval = CLng(XCelSheet1.Cells(lRowCounter1 + 1, REPEAT_INTERVAL_CELL_NUMBER))
+    If Len(Trim(XCelSheet1.Cells(TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) > 0 Then
+       lTimeAfterLastRowInterval = CLng(XCelSheet1.Cells(TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'Get contents of time after last row unit cell if changed
-    If Len(Trim(XCelSheet1.Cells(lRowCounter1 + 1, REPEAT_UNITS_CELL_NUMBER))) > 0 Then
-       sTimeAfterLastRowUnit = Trim(XCelSheet1.Cells(lRowCounter1 + 1, REPEAT_UNITS_CELL_NUMBER))
+    If Len(Trim(XCelSheet1.Cells(TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_UNITS_CELL_NUMBER))) > 0 Then
+       sTimeAfterLastRowUnit = Trim(XCelSheet1.Cells(TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_UNITS_CELL_NUMBER))
        
        'Convert interval unit to string for DateAdd function
        Select Case sTimeAfterLastRowUnit
@@ -137,13 +178,13 @@ Public Sub WriteToOutput()
     End If
     
     'Get contents of time between repeats interval cell if changed
-    If Len(Trim(XCelSheet1.Cells(lRowCounter1 + 2, REPEAT_INTERVAL_CELL_NUMBER))) > 0 Then
-       lTimeBetweenRepeatsInterval = CLng(XCelSheet1.Cells(lRowCounter1 + 2, REPEAT_INTERVAL_CELL_NUMBER))
+    If Len(Trim(XCelSheet1.Cells(TIME_BETWEEN_REPEATS_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) > 0 Then
+       lTimeBetweenRepeatsInterval = CLng(XCelSheet1.Cells(TIME_BETWEEN_REPEATS_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
     'Get contents of time between repeats unit cell if changed
-    If Len(Trim(XCelSheet1.Cells(lRowCounter1 + 2, REPEAT_UNITS_CELL_NUMBER))) > 0 Then
-       sTimeBetweenRepeatsUnit = Trim(XCelSheet1.Cells(lRowCounter1 + 2, REPEAT_UNITS_CELL_NUMBER))
+    If Len(Trim(XCelSheet1.Cells(TIME_BETWEEN_REPEATS_ROW_NUMBER, REPEAT_UNITS_CELL_NUMBER))) > 0 Then
+       sTimeBetweenRepeatsUnit = Trim(XCelSheet1.Cells(TIME_BETWEEN_REPEATS_ROW_NUMBER, REPEAT_UNITS_CELL_NUMBER))
        
        'Convert interval unit to string for DateAdd function and convert repeat interval to seconds for later comparison to pattern interval
        Select Case sTimeBetweenRepeatsUnit
@@ -522,6 +563,544 @@ ERROR:
     Set XCelWorkbook = Nothing
     
 End Sub
+Public Sub WriteToOutputChaos()
+    Dim XCelWorkbook As Excel.Workbook
+    Dim XCelSheet1 As Excel.Worksheet
+    Dim XCelSheet2 As Excel.Worksheet
+    Dim lRowCounter1 As Long: lRowCounter1 = 2
+    Dim lRowCounter2 As Long: lRowCounter2 = 2
+    Dim lNumberOfNonEmptyRowsSheet2 As Long: lNumberOfNonEmptyRowsSheet2 = 0
+    Dim lFirstBlankRow As Long
+    Dim vArrayChaos() As Variant
+    Dim dExperimentDuration As Double: dExperimentDuration = 0
+    Dim sExperimentDurationUnits As String
+    Dim dTimeFromLastRow As Double: dTimeFromLastRow = 0
+    Dim sTimeFromLastRowUnits As String
+    Dim dPhotoPeriod As Double: dPhotoPeriod = 0
+    Dim sPhotoPeriodUnits As String
+    Dim dDarkPeriod As Double: dDarkPeriod = 0
+    Dim sDarkPeriodUnits As String
+    Dim lNumberOfRepetitions, lRepeat As Long
+    Dim dFrequency As Double: dFrequency = 0
+    Dim dX0 As Double: dX0 = 0
+    Dim dR As Double: dR = 0
+    Dim dMD1, dMD2 As Double: dMD1 = 0: dMD2 = 0
+    Dim sDateTime, sDate, sTime, sHH, sMM, sSS, sLine As String
+    Dim bX0Random, bRRandom, bMD1Random, bMD2Random As Boolean: bX0Random = False: bRRandom = False: bMD1Random = False: bMD2Random = False
+    Dim iArrayRowCounter, iArrayColumnCounter As Integer: iArrayRowCounter = 0: iArrayColumnCounter = 0
+    Dim Pi As Double: Pi = 4 * Atn(1)
+    Dim iLogFileNum As Integer: iLogFileNum = FreeFile
+    Dim sLogFileName As String: sLogFileName = Application.ActiveWorkbook.Path & "\Chaos_log.txt"
+    Dim dCH1, dCH2, dCH3, dCH4, dCH5, dCH6 As Double
+    Dim dCH1Output, dCH2Output, dCH3Output, dCH4Output, dCH5Output, dCH6Output As Double
+    Dim dTotalOutput, dTotalOutputCH1, dTotalOutputCH2, dTotalOutputCH3, dTotalOutputCH4, dTotalOutputCH5, dTotalOutputCH6, dDesiredTotalOutput As Double
+    Dim dAdjustedTotalOutput, dAdjustedTotalOutputCH1, dAdjustedTotalOutputCH2, dAdjustedTotalOutputCH3, dAdjustedTotalOutputCH4, dAdjustedTotalOutputCH5, dAdjustedTotalOutputCH6 As Double
+    
+    '---------------------
+    'OBJECT INITIALIZATION
+    '---------------------
+    
+    'Initialize workbook and worksheets
+    Set XCelWorkbook = Application.ActiveWorkbook
+    Set XCelSheet1 = XCelWorkbook.Sheets(1)
+    Set XCelSheet2 = XCelWorkbook.Sheets(2)
+    
+    Open sLogFileName For Output As iLogFileNum
+    
+    '----------------------------------
+    'DATA VALIDATION AND INITIALIZATION
+    '----------------------------------
+    
+    'Experiment duration
+    If Len(Trim(XCelSheet1.Cells(CHAOS_EXPERIMENT_DURATION_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        MsgBox "Please enter experiment duration.", vbExclamation, "Data Entry Error"
+        Exit Sub
+    Else
+        dExperimentDuration = CLng(XCelSheet1.Cells(CHAOS_EXPERIMENT_DURATION_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        sExperimentDurationUnits = XCelSheet1.Cells(CHAOS_EXPERIMENT_DURATION_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1)
+        
+        'Convert experiment duration to seconds
+        Select Case sExperimentDurationUnits
+            Case "Weeks"
+                dExperimentDuration = dExperimentDuration * 604800
+            Case "Days"
+                dExperimentDuration = dExperimentDuration * 86400
+            Case "Hours"
+                dExperimentDuration = dExperimentDuration * 3600
+            Case "Minutes"
+                dExperimentDuration = dExperimentDuration * 60
+            Case "Repeats"
+                lNumberOfRepetitions = dExperimentDuration
+        End Select
+    End If
+    
+    'Photoperiod
+    If Len(Trim(XCelSheet1.Cells(CHAOS_PHOTO_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        MsgBox "Please enter photoperiod.", vbExclamation, "Data Entry Error"
+        Exit Sub
+    Else
+        dPhotoPeriod = CLng(XCelSheet1.Cells(CHAOS_PHOTO_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        sPhotoPeriodUnits = XCelSheet1.Cells(CHAOS_PHOTO_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1)
+        'Convert photo period to seconds
+        Select Case sPhotoPeriodUnits
+            Case "Weeks"
+                dPhotoPeriod = dPhotoPeriod * 604800
+            Case "Days"
+                dPhotoPeriod = dPhotoPeriod * 86400
+            Case "Hours"
+                dPhotoPeriod = dPhotoPeriod * 3600
+            Case "Minutes"
+                dPhotoPeriod = dPhotoPeriod * 60
+        End Select
+    End If
+    
+    'Dark period
+    If Len(Trim(XCelSheet1.Cells(CHAOS_DARK_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        MsgBox "Please enter dark period.", vbExclamation, "Data Entry Error"
+        Exit Sub
+    Else
+        dDarkPeriod = CLng(XCelSheet1.Cells(CHAOS_DARK_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+        sDarkPeriodUnits = XCelSheet1.Cells(CHAOS_PHOTO_PERIOD_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1)
+        'Convert dark period to seconds
+        Select Case sDarkPeriodUnits
+            Case "Weeks"
+                dDarkPeriod = dDarkPeriod * 604800
+            Case "Days"
+                dDarkPeriod = dDarkPeriod * 86400
+            Case "Hours"
+                dDarkPeriod = dDarkPeriod * 3600
+            Case "Minutes"
+                dDarkPeriod = dDarkPeriod * 60
+        End Select
+    End If
+    
+    'If experiment duration is shorter than the sum of the photo period and dark period, throw error
+    If dExperimentDuration < (dPhotoPeriod + dDarkPeriod) Then
+        MsgBox "Sum of photo period and dark period must be less than total experiment duration.", vbExclamation, "Data Entry Error"
+        Exit Sub
+    End If
+    
+    'Determine total number of photo/dark periods that need to be generated (if experiment duration units were not "Repeats")
+    If sExperimentDurationUnits <> "Repeats" Then
+        lNumberOfRepetitions = CLng(dExperimentDuration / (dPhotoPeriod + dDarkPeriod))
+    End If
+    
+    'X0
+    If Len(Trim(XCelSheet1.Cells(CHAOS_X0_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        bX0Random = True
+    Else
+        dX0 = CDbl(XCelSheet1.Cells(CHAOS_X0_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    End If
+    
+    'R
+    If Len(Trim(XCelSheet1.Cells(CHAOS_R_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        bRRandom = True
+    Else
+        dR = CDbl(XCelSheet1.Cells(CHAOS_R_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    End If
+    
+    'MD1
+    If Len(Trim(XCelSheet1.Cells(CHAOS_MD1_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        bMD1Random = True
+    Else
+        dMD1 = CDbl(XCelSheet1.Cells(CHAOS_MD1_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    End If
+    
+    'MD2
+    If Len(Trim(XCelSheet1.Cells(CHAOS_MD2_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1 Then
+        bMD2Random = True
+    Else
+        dMD2 = CDbl(XCelSheet1.Cells(CHAOS_MD2_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
+    End If
+    
+    'Set frequency based on photoperiod
+    dFrequency = CDbl(dPhotoPeriod / 300)
+    
+    'Determine last populated row on worksheet 2
+    lNumberOfNonEmptyRowsSheet2 = CountNonEmptyRows(XCelSheet2, NUMBER_OF_COLUMNS)
+    
+    'Set worksheet 2 row counter to first empty row on worksheet 2
+    If lNumberOfNonEmptyRowsSheet2 >= 2 Then
+        lRowCounter2 = lNumberOfNonEmptyRowsSheet2 + 1
+    End If
+    
+    'If there are rows on output worksheet, set start date for chaos commands to that date.
+    'Otherwise, set it to user entered date in chaos section of input worksheet.
+    If lNumberOfNonEmptyRowsSheet2 > 1 Then
+    
+        If (Len(Trim(XCelSheet1.Cells(CHAOS_TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))) < 1) Or _
+           (Len(Trim(XCelSheet1.Cells(CHAOS_TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1))) < 1) Then
+            
+            MsgBox "Please enter interval and units for time after last row.", vbExclamation, "Data Entry Error"
+            Exit Sub
+            
+        Else
+            dTimeFromLastRow = CDbl(Trim(XCelSheet1.Cells(CHAOS_TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER)))
+            sTimeFromLastRowUnits = Trim(XCelSheet1.Cells(CHAOS_TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1))
+            
+            Select Case sTimeFromLastRowUnits
+                Case "Weeks"
+                    dTimeFromLastRow = dTimeFromLastRow * 604800
+                Case "Days"
+                    dTimeFromLastRow = dTimeFromLastRow * 86400
+                Case "Hours"
+                    dTimeFromLastRow = dTimeFromLastRow * 3600
+                Case "Minutes"
+                    dTimeFromLastRow = dTimeFromLastRow * 60
+            End Select
+            
+            'Get start date/time from last row on output worksheet
+            sDateTime = Format(XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 1) & " " & _
+                         XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 2) & ":" & _
+                         XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 3) & ":" & _
+                         XCelSheet2.Cells(lNumberOfNonEmptyRowsSheet2, 4), DATE_FORMATTING_STRING & " " & TIME_FORMATTING_STRING)
+                         
+            'Advance start date/time by user entered time from last row
+            sDateTime = CStr(DateAdd("s", dTimeFromLastRow, CDate(sDateTime)))
+        End If
+    Else
+        sDateTime = Format(XCelSheet1.Cells(CHAOS_START_DATETIME_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER), DATE_FORMATTING_STRING & " " & TIME_FORMATTING_STRING)
+    End If
+    
+    For lRepeat = 1 To lNumberOfRepetitions
+        'Redim chaos array for current repeat
+        ReDim vArrayChaos(1 To 300, 1 To CHAOS_ARRAY_NUM_COLUMNS)
+        
+        'Set total output for all channels to zero
+        dTotalOutput = 0
+        dTotalOutputCH1 = 0
+        dTotalOutputCH2 = 0
+        dTotalOutputCH3 = 0
+        dTotalOutputCH4 = 0
+        dTotalOutputCH5 = 0
+        dTotalOutputCH6 = 0
+        
+        dAdjustedTotalOutputCH1 = 0
+        dAdjustedTotalOutputCH2 = 0
+        dAdjustedTotalOutputCH3 = 0
+        dAdjustedTotalOutputCH4 = 0
+        dAdjustedTotalOutputCH5 = 0
+        dAdjustedTotalOutputCH6 = 0
+        dAdjustedTotalOutput = 0
+        
+        
+        'Randomize variables (if specified by user)
+        'X0
+        If bX0Random Then
+            Randomize
+            dX0 = (Rnd * (X0_UBOUND - X0_LBOUND)) + X0_LBOUND
+        End If
+        
+        'r
+        If bRRandom Then
+            Randomize
+            dR = (Rnd * (R_UBOUND - R_LBOUND)) + R_LBOUND
+        End If
+        
+        'MD1
+        If bMD1Random Then
+            Randomize
+            dMD1 = (Rnd * (MD1_UBOUND - MD1_LBOUND)) + MD1_LBOUND
+        End If
+        
+        'MD2
+        If bMD2Random Then
+            Randomize
+            dMD2 = (Rnd * (MD2_UBOUND - MD2_LBOUND)) + MD2_LBOUND
+        End If
+        
+        
+        For iArrayColumnCounter = 1 To 5
+            For iArrayRowCounter = 1 To 300
+                Select Case iArrayColumnCounter
+                    Case 1
+                        vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = iArrayRowCounter
+                    Case 2
+                        If iArrayRowCounter = 1 Then
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Application.WorksheetFunction.RoundUp((dR * dX0 * (1 - dX0)), CHAOS_ROUNDING_DIGITS)
+                        Else
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Application.WorksheetFunction.RoundUp(dR * vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter) * (1 - vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter)), CHAOS_ROUNDING_DIGITS)
+                        End If
+                    Case 3
+                        vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Sin(vArrayChaos(iArrayRowCounter, 1) * Pi / 300)
+                    Case 4
+                        vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 3) * (1 - vArrayChaos(iArrayRowCounter, 2) * dMD1)
+                    Case 5
+                        If iArrayRowCounter > 1 Then
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = CDbl(vArrayChaos(iArrayRowCounter - 1, 5) + dFrequency)
+                        Else
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = iArrayRowCounter
+                        End If
+                End Select
+            
+                
+                
+            Next iArrayRowCounter
+        Next iArrayColumnCounter
+        
+        
+        For iArrayColumnCounter = 6 To 8
+            For iArrayRowCounter = 1 To 300
+                Select Case iArrayColumnCounter
+                    Case 6
+                        If Int(vArrayChaos(iArrayRowCounter, 5)) <= 300 Then
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 3) * (1 - vArrayChaos(Int(vArrayChaos(iArrayRowCounter, 5)), 2) * dMD2)
+                        Else
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 3) * (1 - vArrayChaos(300, 2) * dMD2)
+                        End If
+                    Case 7
+                        vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = (vArrayChaos(iArrayRowCounter, 6) + vArrayChaos(iArrayRowCounter, 4)) / 2
+                    Case 8
+                        If CHAOS_BASE_FUNCTION = 1 Then
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 7) * 100
+                        End If
+                        
+                        If CHAOS_BASE_FUNCTION = 0 Then
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 2) * 100
+                        End If
+                End Select
+            Next iArrayRowCounter
+        Next iArrayColumnCounter
+        
+        'Output chaos calculation data to log file
+        'Heading
+        sLine = "Photoperiod " & lRepeat & " (r=" & dR & ", X0=" & dX0 & ", MD1=" & dMD1 & ", MD2=" & dMD2 & ", F=" & dFrequency & ")"
+        Print #iLogFileNum, sLine
+        sLine = "Theta,Chaos,Sin(Theta),Damp,Time,Time&MaxDamp,FinalChaos,FinalChaos*100%"
+        Print #iLogFileNum, sLine
+        sLine = ""
+        
+        'Array
+        For iArrayRowCounter = 1 To 300
+            sLine = ""
+            For iArrayColumnCounter = 1 To 8
+                sLine = sLine & vArrayChaos(iArrayRowCounter, iArrayColumnCounter) & ","
+            Next iArrayColumnCounter
+            Print #iLogFileNum, sLine
+        Next iArrayRowCounter
+        
+        'Populate chaos array with worksheet output values
+        For iArrayRowCounter = 1 To 300
+            'Date and Time
+            If iArrayRowCounter > 1 Then
+                sDateTime = CStr(DateAdd("s", CDbl(vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5)), CDate(sDateTime)))
+            End If
+            
+            sDate = Format(sDateTime, DATE_FORMATTING_STRING)
+            sTime = Format(sDateTime, TIME_FORMATTING_STRING)
+            
+            sHH = Left(sTime, InStr(sTime, ":") - 1)
+            sMM = Mid(sTime, InStr(sTime, ":") + 1, 2)
+            sSS = Right(sTime, 2)
+            
+            'Channel 1 %
+            dCH1 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * (CH1_RATIO / _
+                   Application.WorksheetFunction.Max(CH1_RATIO, CH2_RATIO, CH3_RATIO, CH4_RATIO, CH5_RATIO, CH6_RATIO)), 2))
+            'Channel 2 %
+            dCH2 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * (CH2_RATIO / _
+                   Application.WorksheetFunction.Max(CH1_RATIO, CH2_RATIO, CH3_RATIO, CH4_RATIO, CH5_RATIO, CH6_RATIO)), 2))
+            'Channel 3 %
+            dCH3 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * (CH3_RATIO / _
+                   Application.WorksheetFunction.Max(CH1_RATIO, CH2_RATIO, CH3_RATIO, CH4_RATIO, CH5_RATIO, CH6_RATIO)), 2))
+            'Channel 4 %
+            dCH4 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * (CH4_RATIO / _
+                   Application.WorksheetFunction.Max(CH1_RATIO, CH2_RATIO, CH3_RATIO, CH4_RATIO, CH5_RATIO, CH6_RATIO)), 2))
+            'Channel 5 %
+            dCH5 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * (CH5_RATIO / _
+                   Application.WorksheetFunction.Max(CH1_RATIO, CH2_RATIO, CH3_RATIO, CH4_RATIO, CH5_RATIO, CH6_RATIO)), 2))
+            'Channel 6 %
+            dCH6 = CDbl(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 8) * (CH6_RATIO / _
+                   Application.WorksheetFunction.Max(CH1_RATIO, CH2_RATIO, CH3_RATIO, CH4_RATIO, CH5_RATIO, CH6_RATIO)), 2))
+            
+            'Adjust channel % for max photons
+            
+            'Calculate output photons of each channel (micromol photons / m^2)
+            dCH1Output = (1.9726 * dCH1 - 16.916) * dFrequency
+            dCH2Output = (2.4582 * dCH2 - 15.204) * dFrequency
+'            dCH3Output = (3.1604 * dCH3 - 8.6614) * dFrequency
+'            dCH4Output = ((-0.0076 * (dCH4 ^ 2)) + (2.2092 * dCH4) - 16.318) * dFrequency
+'            dCH5Output = (3.807 * dCH5 - 32.702) * dFrequency
+'            dCH6Output = (2.4158 * dCH6 - 17.079) * dFrequency
+
+            dCH3Output = (-0.0052 * (dCH3 ^ 2) + (3.0623 * dCH3) - 16.067) * dFrequency
+            dCH4Output = ((9 * (10 ^ -6)) * (dCH4 ^ 3) - (0.0058 * (dCH4 ^ 2)) + (1.5671 * dCH4) - 3.7667) * dFrequency
+            dCH5Output = ((-5 * (10 ^ -5)) * (dCH5 ^ 3) + (0.0045 * (dCH5 * 2)) + (2.8477 * dCH5) - 12.603) * dFrequency
+            dCH6Output = ((-4 * (10 ^ -5)) * (dCH6 ^ 3) + (0.003 * (dCH6 ^ 2)) + (1.9106 * dCH6) - 9.6238) * dFrequency
+            
+            If dCH1Output < 0 Then
+                dCH1Output = 0
+            End If
+            
+            If dCH2Output < 0 Then
+                dCH2Output = 0
+            End If
+            
+            If dCH3Output < 0 Then
+                dCH3Output = 0
+            End If
+            
+            If dCH4Output < 0 Then
+                dCH4Output = 0
+            End If
+            
+            If dCH5Output < 0 Then
+                dCH5Output = 0
+            End If
+            
+            If dCH6Output < 0 Then
+                dCH6Output = 0
+            End If
+            
+            'Add output from this row to total output for all channels, all rows
+            dTotalOutput = dTotalOutput + dCH1Output + dCH2Output + dCH3Output + dCH4Output + dCH5Output + dCH6Output
+            dTotalOutputCH1 = dTotalOutputCH1 + dCH1Output
+            dTotalOutputCH2 = dTotalOutputCH2 + dCH2Output
+            dTotalOutputCH3 = dTotalOutputCH3 + dCH3Output
+            dTotalOutputCH4 = dTotalOutputCH4 + dCH4Output
+            dTotalOutputCH5 = dTotalOutputCH5 + dCH5Output
+            dTotalOutputCH6 = dTotalOutputCH6 + dCH6Output
+            
+            'Set output date/time and uncorrected channel %
+            vArrayChaos(iArrayRowCounter, 9) = sDate
+            vArrayChaos(iArrayRowCounter, 10) = sHH
+            vArrayChaos(iArrayRowCounter, 11) = sMM
+            vArrayChaos(iArrayRowCounter, 12) = sSS
+            vArrayChaos(iArrayRowCounter, 13) = dCH1
+            vArrayChaos(iArrayRowCounter, 14) = dCH2
+            vArrayChaos(iArrayRowCounter, 15) = dCH3
+            vArrayChaos(iArrayRowCounter, 16) = dCH4
+            vArrayChaos(iArrayRowCounter, 17) = dCH5
+            vArrayChaos(iArrayRowCounter, 18) = dCH6
+            
+        Next iArrayRowCounter
+        
+        'Write worksheet values to output worksheet
+        For iArrayRowCounter = 1 To 300
+        
+            '((Application.WorksheetFunction.Max(MIN_PERCENT1,MIN_PERCENT2,MIN_PERCENT3,MIN_PERCENT4,MIN_PERCENT5,MIN_PERCENT6)/100) * TOTAL_OUTPUT)
+            dDesiredTotalOutput = TOTAL_OUTPUT - ((Application.WorksheetFunction.Sum(MIN_PERCENT1, MIN_PERCENT2, MIN_PERCENT3, MIN_PERCENT4, MIN_PERCENT5, MIN_PERCENT6) / 100) * TOTAL_OUTPUT)
+        
+            'Adjust channel percentages based on desired output
+            vArrayChaos(iArrayRowCounter, 13) = vArrayChaos(iArrayRowCounter, 13) * dDesiredTotalOutput / dTotalOutput
+            vArrayChaos(iArrayRowCounter, 14) = vArrayChaos(iArrayRowCounter, 14) * dDesiredTotalOutput / dTotalOutput
+            vArrayChaos(iArrayRowCounter, 15) = vArrayChaos(iArrayRowCounter, 15) * dDesiredTotalOutput / dTotalOutput
+            vArrayChaos(iArrayRowCounter, 16) = vArrayChaos(iArrayRowCounter, 16) * dDesiredTotalOutput / dTotalOutput
+            vArrayChaos(iArrayRowCounter, 17) = vArrayChaos(iArrayRowCounter, 17) * dDesiredTotalOutput / dTotalOutput
+            vArrayChaos(iArrayRowCounter, 18) = vArrayChaos(iArrayRowCounter, 18) * dDesiredTotalOutput / dTotalOutput
+            
+            
+            
+            'Adjust channel percentages based on minimum percent per channel
+            vArrayChaos(iArrayRowCounter, 13) = ((vArrayChaos(iArrayRowCounter, 13) / 100) * (100 - MIN_PERCENT1)) + MIN_PERCENT1
+            vArrayChaos(iArrayRowCounter, 14) = ((vArrayChaos(iArrayRowCounter, 14) / 100) * (100 - MIN_PERCENT2)) + MIN_PERCENT2
+            vArrayChaos(iArrayRowCounter, 15) = ((vArrayChaos(iArrayRowCounter, 15) / 100) * (100 - MIN_PERCENT3)) + MIN_PERCENT3
+            vArrayChaos(iArrayRowCounter, 16) = ((vArrayChaos(iArrayRowCounter, 16) / 100) * (100 - MIN_PERCENT4)) + MIN_PERCENT4
+            vArrayChaos(iArrayRowCounter, 17) = ((vArrayChaos(iArrayRowCounter, 17) / 100) * (100 - MIN_PERCENT5)) + MIN_PERCENT5
+            vArrayChaos(iArrayRowCounter, 18) = ((vArrayChaos(iArrayRowCounter, 18) / 100) * (100 - MIN_PERCENT6)) + MIN_PERCENT6
+            
+           
+            'Add output from this row to total output for all channels, all rows
+            
+            If ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * dFrequency) > 0 Then
+                dAdjustedTotalOutputCH1 = dAdjustedTotalOutputCH1 + ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * dFrequency)
+            End If
+            
+            If ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * dFrequency) > 0 Then
+                dAdjustedTotalOutputCH2 = dAdjustedTotalOutputCH2 + ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * dFrequency)
+            End If
+            
+            If ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * dFrequency) > 0 Then
+                dAdjustedTotalOutputCH3 = dAdjustedTotalOutputCH3 + ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * dFrequency)
+            End If
+            
+            If (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * dFrequency) > 0 Then
+                dAdjustedTotalOutputCH4 = dAdjustedTotalOutputCH4 + (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * dFrequency)
+            End If
+            
+            If ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * dFrequency) > 0 Then
+                dAdjustedTotalOutputCH5 = dAdjustedTotalOutputCH5 + ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * dFrequency)
+            End If
+            
+            If ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * dFrequency) > 0 Then
+                dAdjustedTotalOutputCH6 = dAdjustedTotalOutputCH6 + ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * dFrequency)
+            End If
+            
+            
+        
+            'Output array to worksheet
+            XCelSheet2.Cells(lRowCounter2, 1).Value = CStr(vArrayChaos(iArrayRowCounter, 9)) 'Date
+            XCelSheet2.Cells(lRowCounter2, 2).Value = CStr(vArrayChaos(iArrayRowCounter, 10)) 'Hours
+            XCelSheet2.Cells(lRowCounter2, 3).Value = CStr(vArrayChaos(iArrayRowCounter, 11)) 'Minutes
+            XCelSheet2.Cells(lRowCounter2, 4).Value = CStr(vArrayChaos(iArrayRowCounter, 12)) 'Seconds
+            XCelSheet2.Cells(lRowCounter2, 5).Value = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 13), 2)) 'CH1 %
+            XCelSheet2.Cells(lRowCounter2, 6).Value = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 14), 2)) 'CH2 %
+            XCelSheet2.Cells(lRowCounter2, 7).Value = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 15), 2)) 'CH3 %
+            XCelSheet2.Cells(lRowCounter2, 8).Value = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 16), 2)) 'CH4 %
+            XCelSheet2.Cells(lRowCounter2, 9).Value = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 17), 2)) 'CH5 %
+            XCelSheet2.Cells(lRowCounter2, 10).Value = CStr(Application.WorksheetFunction.RoundUp(vArrayChaos(iArrayRowCounter, 18), 2)) 'CH6 %
+            
+            lRowCounter2 = lRowCounter2 + 1
+            
+        Next iArrayRowCounter
+        
+        dAdjustedTotalOutput = dAdjustedTotalOutputCH1 + dAdjustedTotalOutputCH2 + dAdjustedTotalOutputCH3 + dAdjustedTotalOutputCH4 + dAdjustedTotalOutputCH5 + dAdjustedTotalOutputCH6
+        
+        'Add row for dark period
+        sDateTime = CStr(DateAdd("s", dFrequency, CDate(sDateTime)))
+        
+        sDate = Format(sDateTime, DATE_FORMATTING_STRING)
+        sTime = Format(sDateTime, TIME_FORMATTING_STRING)
+            
+        sHH = Left(sTime, InStr(sTime, ":") - 1)
+        sMM = Mid(sTime, InStr(sTime, ":") + 1, 2)
+        sSS = Right(sTime, 2)
+        
+        XCelSheet2.Cells(lRowCounter2, 1).Value = sDate
+        XCelSheet2.Cells(lRowCounter2, 2).Value = sHH
+        XCelSheet2.Cells(lRowCounter2, 3).Value = sMM
+        XCelSheet2.Cells(lRowCounter2, 4).Value = sSS
+        XCelSheet2.Cells(lRowCounter2, 5).Value = CStr(0)
+        XCelSheet2.Cells(lRowCounter2, 6).Value = CStr(0)
+        XCelSheet2.Cells(lRowCounter2, 7).Value = CStr(0)
+        XCelSheet2.Cells(lRowCounter2, 8).Value = CStr(0)
+        XCelSheet2.Cells(lRowCounter2, 9).Value = CStr(0)
+        XCelSheet2.Cells(lRowCounter2, 10).Value = CStr(0)
+        
+        lRowCounter2 = lRowCounter2 + 1
+        
+        'Advance time for dark period
+        sDateTime = CStr(DateAdd("s", dDarkPeriod, CDate(sDateTime)))
+        
+        'Print total output per channel and overall to log file
+        sLine = "Unadjusted output: CH1 Output = " & dTotalOutputCH1 & ", CH2 Output = " & dTotalOutputCH2 & ", CH3 Output = " & dTotalOutputCH3 & ", CH4 Output = " & dTotalOutputCH4 & ",  CH5 Output = " & dTotalOutputCH5 & ", CH6 Output = " & dTotalOutputCH6 & ", " & "Total output = " & dTotalOutput
+        Print #iLogFileNum, sLine
+        sLine = "Adjusted output: CH1 Output = " & dAdjustedTotalOutputCH1 & ", CH2 Output = " & dAdjustedTotalOutputCH2 & ", CH3 Output = " & dAdjustedTotalOutputCH3 & ", CH4 Output = " & dAdjustedTotalOutputCH4 & ",  CH5 Output = " & dAdjustedTotalOutputCH5 & ", CH6 Output = " & dAdjustedTotalOutputCH6 & ", " & "Total output = " & dAdjustedTotalOutput
+        Print #iLogFileNum, sLine
+        sLine = ""
+        
+    Next lRepeat
+    
+    
+    Close iLogFileNum
+    Set XCelSheet1 = Nothing
+    Set XCelSheet2 = Nothing
+    
+    Set XCelWorkbook = Nothing
+Exit Sub
+    
+ERROR:
+    MsgBox Err.Description, vbCritical, "Error"
+    On Error Resume Next
+    
+    'Protect Output worksheet
+    XCelSheet2.Protect (PROTECT_PASSWORD)
+    Close iLogFileNum
+    Set XCelSheet1 = Nothing
+    Set XCelSheet2 = Nothing
+    
+    Set XCelWorkbook = Nothing
+    
+End Sub
 
 '--------------------------------------------------------------------------------------------------------------
 'Sub: WriteToFile
@@ -747,7 +1326,7 @@ Public Sub WriteToFile()
     sLine = sLine & sTime & TEXT_FILE_DELIMITER
     
     For i = 1 To 6
-        sLine = sLine & "-1" & TEXT_FILE_DELIMITER
+        sLine = sLine & "0" & TEXT_FILE_DELIMITER
     Next i
     
     sLine = sLine & "X"
@@ -836,12 +1415,12 @@ Public Sub ClearInput()
         Next i
     End With
     
-    XCelSheet1.Cells(2, REPEAT_INTERVAL_CELL_NUMBER).Value = ""
-    XCelSheet1.Cells(2, REPEAT_INTERVAL_CELL_NUMBER + 1).Value = ""
-    XCelSheet1.Cells(3, REPEAT_INTERVAL_CELL_NUMBER).Value = ""
-    XCelSheet1.Cells(3, REPEAT_INTERVAL_CELL_NUMBER + 1).Value = ""
-    XCelSheet1.Cells(4, REPEAT_INTERVAL_CELL_NUMBER).Value = ""
-    XCelSheet1.Cells(4, REPEAT_INTERVAL_CELL_NUMBER + 1).Value = ""
+    XCelSheet1.Cells(REPEAT_PATTERN_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER).Value = ""
+    XCelSheet1.Cells(REPEAT_PATTERN_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1).Value = ""
+    XCelSheet1.Cells(TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER).Value = ""
+    XCelSheet1.Cells(TIME_FROM_LAST_ROW_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1).Value = ""
+    XCelSheet1.Cells(TIME_BETWEEN_REPEATS_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER).Value = ""
+    XCelSheet1.Cells(TIME_BETWEEN_REPEATS_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER + 1).Value = ""
         
     'Protect Output worksheet
     XCelSheet1.Protect (PROTECT_PASSWORD)
@@ -927,7 +1506,7 @@ End Sub
 Public Sub UploadFileToRaspberryPi()
     Dim sCommandLine As String
     Dim iFileNum As Integer: iFileNum = FreeFile
-    Dim sFileName As String: sFileName = Application.ActiveWorkbook.Path & "\move_file.txt"
+    Dim sFileName As String: sFileName = QUOTATION & Application.ActiveWorkbook.Path & "\move_file.txt" & QUOTATION
     Dim sLine As String
     Dim wsh As Object
     Set wsh = VBA.CreateObject("WScript.Shell")
@@ -966,7 +1545,7 @@ Public Sub UploadFileToRaspberryPi()
         On Error GoTo ERROR
     Else
         'Application.Speech.Speak ("Please connect to Buffalo network.")
-        MsgBox "You must be connected to domain 'BUFFALO' to use this feature.", vbCritical, "Connection Error"
+        MsgBox "You must be connected to domain 'PlantLab' to use this feature.", vbCritical, "Connection Error"
     End If
             
     
@@ -1219,3 +1798,4 @@ Private Function CommonDataValidation(xCelSheet As Excel.Worksheet) As Boolean
     
     CommonDataValidation = True
 End Function
+
