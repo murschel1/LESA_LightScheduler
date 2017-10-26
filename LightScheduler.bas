@@ -40,25 +40,26 @@ Const SESSION_NAME As String = "Raspberry_pi"
 Const X0_UBOUND As Double = 1
 Const X0_LBOUND As Double = 0
 Const R_UBOUND As Double = 4
-Const R_LBOUND As Double = 3.7
-Const MD1_UBOUND As Double = 1
+Const R_LBOUND As Double = 3.9
+Const MD1_UBOUND As Double = 0.5
 Const MD1_LBOUND As Double = 0
-Const MD2_UBOUND As Double = 1
+Const MD2_UBOUND As Double = 0.5
 Const MD2_LBOUND As Double = 0
 '*** NOTE: FUTURE VERSION SHOULD ALLOW USER ENTRY OF FOLLOWING CONSTANTS *********************
 Const CH1_RATIO As Double = 0
 Const CH2_RATIO As Double = 0
-Const CH3_RATIO As Double = 25
-Const CH4_RATIO As Double = 30
-Const CH5_RATIO As Double = 45
-Const CH6_RATIO As Double = 0
+Const CH3_RATIO As Double = 20
+Const CH4_RATIO As Double = 20
+Const CH5_RATIO As Double = 60
+Const CH6_RATIO As Double = 12
 Const MIN_PERCENT1 As Double = 0
 Const MIN_PERCENT2 As Double = 0
-Const MIN_PERCENT3 As Double = 12
-Const MIN_PERCENT4 As Double = 15
-Const MIN_PERCENT5 As Double = 15
+Const MIN_PERCENT3 As Double = 0
+Const MIN_PERCENT4 As Double = 0
+Const MIN_PERCENT5 As Double = 0
 Const MIN_PERCENT6 As Double = 0
-Const TOTAL_OUTPUT As Double = 15000000 'micromol photons/m2/day
+Const TOTAL_OUTPUT As Double = 10000000 'micromol photons/m2/day (or photoperiod)
+Const CHAOS_BASE_FUNCTION As Integer = 0 '0 = flat line, 1 = sine wave
 '*********************************************************************************************'
 Const CHAOS_ROUNDING_DIGITS As Integer = 6
 
@@ -850,7 +851,13 @@ Public Sub WriteToOutputChaos()
                     Case 7
                         vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = (vArrayChaos(iArrayRowCounter, 6) + vArrayChaos(iArrayRowCounter, 4)) / 2
                     Case 8
-                        vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 7) * 100
+                        If CHAOS_BASE_FUNCTION = 1 Then
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 7) * 100
+                        End If
+                        
+                        If CHAOS_BASE_FUNCTION = 0 Then
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 2) * 100
+                        End If
                 End Select
             Next iArrayRowCounter
         Next iArrayColumnCounter
@@ -910,10 +917,15 @@ Public Sub WriteToOutputChaos()
             'Calculate output photons of each channel (micromol photons / m^2)
             dCH1Output = (1.9726 * dCH1 - 16.916) * dFrequency
             dCH2Output = (2.4582 * dCH2 - 15.204) * dFrequency
-            dCH3Output = (3.1604 * dCH3 - 8.6614) * dFrequency
-            dCH4Output = ((-0.0076 * (dCH4 ^ 2)) + (2.2092 * dCH4) - 16.318) * dFrequency
-            dCH5Output = (3.807 * dCH5 - 32.702) * dFrequency
-            dCH6Output = (2.4158 * dCH6 - 17.079) * dFrequency
+'            dCH3Output = (3.1604 * dCH3 - 8.6614) * dFrequency
+'            dCH4Output = ((-0.0076 * (dCH4 ^ 2)) + (2.2092 * dCH4) - 16.318) * dFrequency
+'            dCH5Output = (3.807 * dCH5 - 32.702) * dFrequency
+'            dCH6Output = (2.4158 * dCH6 - 17.079) * dFrequency
+
+            dCH3Output = (-0.0052 * (dCH3 ^ 2) + (3.0623 * dCH3) - 16.067) * dFrequency
+            dCH4Output = ((9 * (10 ^ -6)) * (dCH4 ^ 3) - (0.0058 * (dCH4 ^ 2)) + (1.5671 * dCH4) - 3.7667) * dFrequency
+            dCH5Output = ((-5 * (10 ^ -5)) * (dCH5 ^ 3) + (0.0045 * (dCH5 * 2)) + (2.8477 * dCH5) - 12.603) * dFrequency
+            dCH6Output = ((-4 * (10 ^ -5)) * (dCH6 ^ 3) + (0.003 * (dCH6 ^ 2)) + (1.9106 * dCH6) - 9.6238) * dFrequency
             
             If dCH1Output < 0 Then
                 dCH1Output = 0
@@ -1047,12 +1059,12 @@ Public Sub WriteToOutputChaos()
         XCelSheet2.Cells(lRowCounter2, 2).Value = sHH
         XCelSheet2.Cells(lRowCounter2, 3).Value = sMM
         XCelSheet2.Cells(lRowCounter2, 4).Value = sSS
-        XCelSheet2.Cells(lRowCounter2, 5).Value = CStr(-1)
-        XCelSheet2.Cells(lRowCounter2, 6).Value = CStr(-1)
-        XCelSheet2.Cells(lRowCounter2, 7).Value = CStr(-1)
-        XCelSheet2.Cells(lRowCounter2, 8).Value = CStr(-1)
-        XCelSheet2.Cells(lRowCounter2, 9).Value = CStr(-1)
-        XCelSheet2.Cells(lRowCounter2, 10).Value = CStr(-1)
+        XCelSheet2.Cells(lRowCounter2, 5).Value = CStr(0)
+        XCelSheet2.Cells(lRowCounter2, 6).Value = CStr(0)
+        XCelSheet2.Cells(lRowCounter2, 7).Value = CStr(0)
+        XCelSheet2.Cells(lRowCounter2, 8).Value = CStr(0)
+        XCelSheet2.Cells(lRowCounter2, 9).Value = CStr(0)
+        XCelSheet2.Cells(lRowCounter2, 10).Value = CStr(0)
         
         lRowCounter2 = lRowCounter2 + 1
         
@@ -1314,7 +1326,7 @@ Public Sub WriteToFile()
     sLine = sLine & sTime & TEXT_FILE_DELIMITER
     
     For i = 1 To 6
-        sLine = sLine & "-1" & TEXT_FILE_DELIMITER
+        sLine = sLine & "0" & TEXT_FILE_DELIMITER
     Next i
     
     sLine = sLine & "X"
@@ -1494,7 +1506,7 @@ End Sub
 Public Sub UploadFileToRaspberryPi()
     Dim sCommandLine As String
     Dim iFileNum As Integer: iFileNum = FreeFile
-    Dim sFileName As String: sFileName = Application.ActiveWorkbook.Path & "\move_file.txt"
+    Dim sFileName As String: sFileName = QUOTATION & Application.ActiveWorkbook.Path & "\move_file.txt" & QUOTATION
     Dim sLine As String
     Dim wsh As Object
     Set wsh = VBA.CreateObject("WScript.Shell")
@@ -1533,7 +1545,7 @@ Public Sub UploadFileToRaspberryPi()
         On Error GoTo ERROR
     Else
         'Application.Speech.Speak ("Please connect to Buffalo network.")
-        MsgBox "You must be connected to domain 'BUFFALO' to use this feature.", vbCritical, "Connection Error"
+        MsgBox "You must be connected to domain 'PlantLab' to use this feature.", vbCritical, "Connection Error"
     End If
             
     
