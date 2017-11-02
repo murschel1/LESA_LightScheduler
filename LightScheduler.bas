@@ -62,6 +62,8 @@ Const TOTAL_OUTPUT As Double = 10000000 'micromol photons/m2/day (or photoperiod
 Const CHAOS_BASE_FUNCTION As Integer = 0 '0 = flat line, 1 = sine wave
 '*********************************************************************************************'
 Const CHAOS_ROUNDING_DIGITS As Integer = 6
+Const CHAOS_MAX_SWITCH_TIME As Integer = 180 'Maximum switching time in seconds
+Const CHAOS_MIN_SWITCH_TIME As Integer = 30 'Minimum switching time in seconds
 
 Const RASP_PI_INTERFACE_NAME As String = "HortiLight_v1.1.py"
 Const RUNLIGHTCOMMAND_FILE_NAME As String = "RunLightCommand_v1.1.py"
@@ -571,7 +573,7 @@ Public Sub WriteToOutputChaos()
     Dim lRowCounter2 As Long: lRowCounter2 = 2
     Dim lNumberOfNonEmptyRowsSheet2 As Long: lNumberOfNonEmptyRowsSheet2 = 0
     Dim lFirstBlankRow As Long
-    Dim vArrayChaos() As Variant
+    Dim vArrayChaos(), vArrayChaosTemp() As Variant
     Dim dExperimentDuration As Double: dExperimentDuration = 0
     Dim sExperimentDurationUnits As String
     Dim dTimeFromLastRow As Double: dTimeFromLastRow = 0
@@ -581,13 +583,15 @@ Public Sub WriteToOutputChaos()
     Dim dDarkPeriod As Double: dDarkPeriod = 0
     Dim sDarkPeriodUnits As String
     Dim lNumberOfRepetitions, lRepeat As Long
-    Dim dFrequency As Double: dFrequency = 0
+    'Dim vArrayChaos(iArrayRowCounter, 5) As Double: vArrayChaos(iArrayRowCounter, 5) = 0
+    Dim iTotalTime, iSwitchTime As Integer: iTotalTime = 0: iSwitchTime = 0
+    Dim iArrayChaosRows As Integer: iArrayChaosRows = 1
     Dim dX0 As Double: dX0 = 0
     Dim dR As Double: dR = 0
     Dim dMD1, dMD2 As Double: dMD1 = 0: dMD2 = 0
     Dim sDateTime, sDate, sTime, sHH, sMM, sSS, sLine As String
     Dim bX0Random, bRRandom, bMD1Random, bMD2Random As Boolean: bX0Random = False: bRRandom = False: bMD1Random = False: bMD2Random = False
-    Dim iArrayRowCounter, iArrayColumnCounter As Integer: iArrayRowCounter = 0: iArrayColumnCounter = 0
+    Dim iArrayRowCounter, iArrayColumnCounter, iTempArrayCounterRows, iTempArrayCounterColumns As Integer: iArrayRowCounter = 0: iArrayColumnCounter = 0: iTempArrayCounterRows = 0: iTempArrayCounterColumns = 0
     Dim Pi As Double: Pi = 4 * Atn(1)
     Dim iLogFileNum As Integer: iLogFileNum = FreeFile
     Dim sLogFileName As String: sLogFileName = Application.ActiveWorkbook.Path & "\Chaos_log.txt"
@@ -713,8 +717,9 @@ Public Sub WriteToOutputChaos()
         dMD2 = CDbl(XCelSheet1.Cells(CHAOS_MD2_ROW_NUMBER, REPEAT_INTERVAL_CELL_NUMBER))
     End If
     
+    
     'Set frequency based on photoperiod
-    dFrequency = CDbl(dPhotoPeriod / 300)
+    'vArrayChaos(iArrayRowCounter, 5) = CDbl(dPhotoPeriod / 300)
     
     'Determine last populated row on worksheet 2
     lNumberOfNonEmptyRowsSheet2 = CountNonEmptyRows(XCelSheet2, NUMBER_OF_COLUMNS)
@@ -763,8 +768,46 @@ Public Sub WriteToOutputChaos()
     End If
     
     For lRepeat = 1 To lNumberOfRepetitions
-        'Redim chaos array for current repeat
-        ReDim vArrayChaos(1 To 300, 1 To CHAOS_ARRAY_NUM_COLUMNS)
+    
+        'Initialize counters for total time and number of rows in chaos array
+        iTotalTime = 0
+        iArrayChaosRows = 1
+        
+        'Initialize chaos array
+        ReDim vArrayChaos(1 To 1, 1 To CHAOS_ARRAY_NUM_COLUMNS)
+        
+        'Generate random switching times until photoperiod time reached or exceeded
+        Do Until iTotalTime >= dPhotoPeriod
+        
+            'Generate random switching time for this step
+            iSwitchTime = Int((CHAOS_MAX_SWITCH_TIME - CHAOS_MIN_SWITCH_TIME + 1) * Rnd + CHAOS_MIN_SWITCH_TIME)
+            
+            'Add switching time to total time
+            iTotalTime = iTotalTime + iSwitchTime
+            
+            'Populate chaos array step time with total time plus random switching time
+            vArrayChaos(iArrayChaosRows, 5) = iTotalTime
+            
+            'Increment number of rows for chaos array
+            iArrayChaosRows = iArrayChaosRows + 1
+            
+            'Put values in chaos array in new temporary array
+            vArrayChaosTemp = vArrayChaos
+            
+            'Redimension chaos array to add row for current repeat
+            ReDim vArrayChaos(1 To iArrayChaosRows, 1 To CHAOS_ARRAY_NUM_COLUMNS)
+            
+            'Copy values from temp array into redimensioned chaos array
+            For iTempArrayCounterRows = 1 To UBound(vArrayChaosTemp, 1)
+                For iTempArrayCounterColumns = 1 To UBound(vArrayChaosTemp, 2)
+                    vArrayChaos(iTempArrayCounterRows, iTempArrayCounterColumns) = vArrayChaosTemp(iTempArrayCounterRows, iTempArrayCounterColumns)
+                Next iTempArrayCounterColumns
+            Next iTempArrayCounterRows
+            
+            
+            
+        Loop
+        
         
         'Set total output for all channels to zero
         dTotalOutput = 0
@@ -809,9 +852,8 @@ Public Sub WriteToOutputChaos()
             dMD2 = (Rnd * (MD2_UBOUND - MD2_LBOUND)) + MD2_LBOUND
         End If
         
-        
-        For iArrayColumnCounter = 1 To 5
-            For iArrayRowCounter = 1 To 300
+        For iArrayColumnCounter = 1 To 4
+            For iArrayRowCounter = 1 To iArrayChaosRows - 1
                 Select Case iArrayColumnCounter
                     Case 1
                         vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = iArrayRowCounter
@@ -822,15 +864,15 @@ Public Sub WriteToOutputChaos()
                             vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Application.WorksheetFunction.RoundUp(dR * vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter) * (1 - vArrayChaos(iArrayRowCounter - 1, iArrayColumnCounter)), CHAOS_ROUNDING_DIGITS)
                         End If
                     Case 3
-                        vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Sin(vArrayChaos(iArrayRowCounter, 1) * Pi / 300)
+                        vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = Sin(vArrayChaos(iArrayRowCounter, 1) * Pi / iArrayChaosRows)
                     Case 4
                         vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 3) * (1 - vArrayChaos(iArrayRowCounter, 2) * dMD1)
-                    Case 5
-                        If iArrayRowCounter > 1 Then
-                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = CDbl(vArrayChaos(iArrayRowCounter - 1, 5) + dFrequency)
-                        Else
-                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = iArrayRowCounter
-                        End If
+                    'Case 5
+                        'If iArrayRowCounter > 1 Then
+                            'vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = CDbl(vArrayChaos(iArrayRowCounter - 1, 5) + vArrayChaos(iArrayRowCounter, 5))
+                        'Else
+                            'vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = iArrayRowCounter
+                        'End If
                 End Select
             
                 
@@ -840,13 +882,13 @@ Public Sub WriteToOutputChaos()
         
         
         For iArrayColumnCounter = 6 To 8
-            For iArrayRowCounter = 1 To 300
+            For iArrayRowCounter = 1 To iArrayChaosRows - 1
                 Select Case iArrayColumnCounter
                     Case 6
-                        If Int(vArrayChaos(iArrayRowCounter, 5)) <= 300 Then
+                        If Int(vArrayChaos(iArrayRowCounter, 5)) <= iArrayChaosRows Then
                             vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 3) * (1 - vArrayChaos(Int(vArrayChaos(iArrayRowCounter, 5)), 2) * dMD2)
                         Else
-                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 3) * (1 - vArrayChaos(300, 2) * dMD2)
+                            vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = vArrayChaos(iArrayRowCounter, 3) * (1 - vArrayChaos(iArrayChaosRows, 2) * dMD2)
                         End If
                     Case 7
                         vArrayChaos(iArrayRowCounter, iArrayColumnCounter) = (vArrayChaos(iArrayRowCounter, 6) + vArrayChaos(iArrayRowCounter, 4)) / 2
@@ -864,14 +906,14 @@ Public Sub WriteToOutputChaos()
         
         'Output chaos calculation data to log file
         'Heading
-        sLine = "Photoperiod " & lRepeat & " (r=" & dR & ", X0=" & dX0 & ", MD1=" & dMD1 & ", MD2=" & dMD2 & ", F=" & dFrequency & ")"
+        sLine = "Photoperiod " & lRepeat & " (r=" & dR & ", X0=" & dX0 & ", MD1=" & dMD1 & ", MD2=" & dMD2 & ", F=" & vArrayChaos(iArrayRowCounter, 5) & ")"
         Print #iLogFileNum, sLine
         sLine = "Theta,Chaos,Sin(Theta),Damp,Time,Time&MaxDamp,FinalChaos,FinalChaos*100%"
         Print #iLogFileNum, sLine
         sLine = ""
         
         'Array
-        For iArrayRowCounter = 1 To 300
+        For iArrayRowCounter = 1 To iArrayChaosRows - 1
             sLine = ""
             For iArrayColumnCounter = 1 To 8
                 sLine = sLine & vArrayChaos(iArrayRowCounter, iArrayColumnCounter) & ","
@@ -880,7 +922,7 @@ Public Sub WriteToOutputChaos()
         Next iArrayRowCounter
         
         'Populate chaos array with worksheet output values
-        For iArrayRowCounter = 1 To 300
+        For iArrayRowCounter = 1 To iArrayChaosRows - 1
             'Date and Time
             If iArrayRowCounter > 1 Then
                 sDateTime = CStr(DateAdd("s", CDbl(vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5)), CDate(sDateTime)))
@@ -915,17 +957,17 @@ Public Sub WriteToOutputChaos()
             'Adjust channel % for max photons
             
             'Calculate output photons of each channel (micromol photons / m^2)
-            dCH1Output = (1.9726 * dCH1 - 16.916) * dFrequency
-            dCH2Output = (2.4582 * dCH2 - 15.204) * dFrequency
-'            dCH3Output = (3.1604 * dCH3 - 8.6614) * dFrequency
-'            dCH4Output = ((-0.0076 * (dCH4 ^ 2)) + (2.2092 * dCH4) - 16.318) * dFrequency
-'            dCH5Output = (3.807 * dCH5 - 32.702) * dFrequency
-'            dCH6Output = (2.4158 * dCH6 - 17.079) * dFrequency
-
-            dCH3Output = (-0.0052 * (dCH3 ^ 2) + (3.0623 * dCH3) - 16.067) * dFrequency
-            dCH4Output = ((9 * (10 ^ -6)) * (dCH4 ^ 3) - (0.0058 * (dCH4 ^ 2)) + (1.5671 * dCH4) - 3.7667) * dFrequency
-            dCH5Output = ((-5 * (10 ^ -5)) * (dCH5 ^ 3) + (0.0045 * (dCH5 * 2)) + (2.8477 * dCH5) - 12.603) * dFrequency
-            dCH6Output = ((-4 * (10 ^ -5)) * (dCH6 ^ 3) + (0.003 * (dCH6 ^ 2)) + (1.9106 * dCH6) - 9.6238) * dFrequency
+            dCH1Output = (1.9726 * dCH1 - 16.916) * vArrayChaos(iArrayRowCounter, 5)
+            dCH2Output = (2.4582 * dCH2 - 15.204) * vArrayChaos(iArrayRowCounter, 5)
+'            dCH3Output = (3.1604 * dCH3 - 8.6614) * vArrayChaos(iArrayRowCounter, 5)
+'            dCH4Output = ((-0.0076 * (dCH4 ^ 2)) + (2.2092 * dCH4) - 16.318) * vArrayChaos(iArrayRowCounter, 5)
+'            dCH5Output = (3.807 * dCH5 - 32.702) * vArrayChaos(iArrayRowCounter, 5)
+'            dCH6Output = (2.4158 * dCH6 - 17.079) * vArrayChaos(iArrayRowCounter, 5)
+            
+            dCH3Output = (-0.0052 * (dCH3 ^ 2) + (3.0623 * dCH3) - 16.067) * vArrayChaos(iArrayRowCounter, 5)
+            dCH4Output = ((9 * (10 ^ -6)) * (dCH4 ^ 3) - (0.0058 * (dCH4 ^ 2)) + (1.5671 * dCH4) - 3.7667) * vArrayChaos(iArrayRowCounter, 5)
+            dCH5Output = ((-5 * (10 ^ -5)) * (dCH5 ^ 3) + (0.0045 * (dCH5 * 2)) + (2.8477 * dCH5) - 12.603) * vArrayChaos(iArrayRowCounter, 5)
+            dCH6Output = ((-4 * (10 ^ -5)) * (dCH6 ^ 3) + (0.003 * (dCH6 ^ 2)) + (1.9106 * dCH6) - 9.6238) * vArrayChaos(iArrayRowCounter, 5)
             
             If dCH1Output < 0 Then
                 dCH1Output = 0
@@ -975,7 +1017,7 @@ Public Sub WriteToOutputChaos()
         Next iArrayRowCounter
         
         'Write worksheet values to output worksheet
-        For iArrayRowCounter = 1 To 300
+        For iArrayRowCounter = 1 To iArrayChaosRows - 1
         
             '((Application.WorksheetFunction.Max(MIN_PERCENT1,MIN_PERCENT2,MIN_PERCENT3,MIN_PERCENT4,MIN_PERCENT5,MIN_PERCENT6)/100) * TOTAL_OUTPUT)
             dDesiredTotalOutput = TOTAL_OUTPUT - ((Application.WorksheetFunction.Sum(MIN_PERCENT1, MIN_PERCENT2, MIN_PERCENT3, MIN_PERCENT4, MIN_PERCENT5, MIN_PERCENT6) / 100) * TOTAL_OUTPUT)
@@ -1001,28 +1043,28 @@ Public Sub WriteToOutputChaos()
            
             'Add output from this row to total output for all channels, all rows
             
-            If ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * dFrequency) > 0 Then
-                dAdjustedTotalOutputCH1 = dAdjustedTotalOutputCH1 + ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * dFrequency)
+            If ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
+                dAdjustedTotalOutputCH1 = dAdjustedTotalOutputCH1 + ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * vArrayChaos(iArrayRowCounter, 5))
             End If
             
-            If ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * dFrequency) > 0 Then
-                dAdjustedTotalOutputCH2 = dAdjustedTotalOutputCH2 + ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * dFrequency)
+            If ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
+                dAdjustedTotalOutputCH2 = dAdjustedTotalOutputCH2 + ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * vArrayChaos(iArrayRowCounter, 5))
             End If
             
-            If ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * dFrequency) > 0 Then
-                dAdjustedTotalOutputCH3 = dAdjustedTotalOutputCH3 + ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * dFrequency)
+            If ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
+                dAdjustedTotalOutputCH3 = dAdjustedTotalOutputCH3 + ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * vArrayChaos(iArrayRowCounter, 5))
             End If
             
-            If (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * dFrequency) > 0 Then
-                dAdjustedTotalOutputCH4 = dAdjustedTotalOutputCH4 + (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * dFrequency)
+            If (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
+                dAdjustedTotalOutputCH4 = dAdjustedTotalOutputCH4 + (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * vArrayChaos(iArrayRowCounter, 5))
             End If
             
-            If ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * dFrequency) > 0 Then
-                dAdjustedTotalOutputCH5 = dAdjustedTotalOutputCH5 + ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * dFrequency)
+            If ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
+                dAdjustedTotalOutputCH5 = dAdjustedTotalOutputCH5 + ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * vArrayChaos(iArrayRowCounter, 5))
             End If
             
-            If ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * dFrequency) > 0 Then
-                dAdjustedTotalOutputCH6 = dAdjustedTotalOutputCH6 + ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * dFrequency)
+            If ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
+                dAdjustedTotalOutputCH6 = dAdjustedTotalOutputCH6 + ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * vArrayChaos(iArrayRowCounter, 5))
             End If
             
             
@@ -1046,7 +1088,7 @@ Public Sub WriteToOutputChaos()
         dAdjustedTotalOutput = dAdjustedTotalOutputCH1 + dAdjustedTotalOutputCH2 + dAdjustedTotalOutputCH3 + dAdjustedTotalOutputCH4 + dAdjustedTotalOutputCH5 + dAdjustedTotalOutputCH6
         
         'Add row for dark period
-        sDateTime = CStr(DateAdd("s", dFrequency, CDate(sDateTime)))
+        sDateTime = CStr(DateAdd("s", vArrayChaos(iArrayRowCounter, 5), CDate(sDateTime)))
         
         sDate = Format(sDateTime, DATE_FORMATTING_STRING)
         sTime = Format(sDateTime, TIME_FORMATTING_STRING)
@@ -1435,6 +1477,8 @@ ERROR:
 
     Set XCelWorkbook = Nothing
 End Sub
+
+
 
 'Function to determine last populated row on a worksheet
 Private Function CountNonEmptyRows(xCelSheet As Excel.Worksheet, lNumberOfColumnsToCheck As Long) As Long
