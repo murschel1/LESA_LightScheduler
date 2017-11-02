@@ -1058,29 +1058,54 @@ Public Sub WriteToOutputChaos()
             
            
             'Add output from this row to total output for all channels, all rows
-            
-            If ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
-                dAdjustedTotalOutputCH1 = dAdjustedTotalOutputCH1 + ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * vArrayChaos(iArrayRowCounter, 5))
-            End If
-            
-            If ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
-                dAdjustedTotalOutputCH2 = dAdjustedTotalOutputCH2 + ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * vArrayChaos(iArrayRowCounter, 5))
-            End If
-            
-            If ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
-                dAdjustedTotalOutputCH3 = dAdjustedTotalOutputCH3 + ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * vArrayChaos(iArrayRowCounter, 5))
-            End If
-            
-            If (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
-                dAdjustedTotalOutputCH4 = dAdjustedTotalOutputCH4 + (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * vArrayChaos(iArrayRowCounter, 5))
-            End If
-            
-            If ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
-                dAdjustedTotalOutputCH5 = dAdjustedTotalOutputCH5 + ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * vArrayChaos(iArrayRowCounter, 5))
-            End If
-            
-            If ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
-                dAdjustedTotalOutputCH6 = dAdjustedTotalOutputCH6 + ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * vArrayChaos(iArrayRowCounter, 5))
+            If iArrayRowCounter > 1 Then
+                If ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5))) > 0 Then
+                    dAdjustedTotalOutputCH1 = dAdjustedTotalOutputCH1 + ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5)))
+                End If
+                
+                If ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5))) > 0 Then
+                    dAdjustedTotalOutputCH2 = dAdjustedTotalOutputCH2 + ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5)))
+                End If
+                
+                If ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5))) > 0 Then
+                    dAdjustedTotalOutputCH3 = dAdjustedTotalOutputCH3 + ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5)))
+                End If
+                
+                If (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5))) > 0 Then
+                    dAdjustedTotalOutputCH4 = dAdjustedTotalOutputCH4 + (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5)))
+                End If
+                
+                If ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5))) > 0 Then
+                    dAdjustedTotalOutputCH5 = dAdjustedTotalOutputCH5 + ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5)))
+                End If
+                
+                If ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5))) > 0 Then
+                    dAdjustedTotalOutputCH6 = dAdjustedTotalOutputCH6 + ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5)))
+                End If
+            Else
+                If ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
+                    dAdjustedTotalOutputCH1 = dAdjustedTotalOutputCH1 + ((1.9726 * vArrayChaos(iArrayRowCounter, 13) - 16.916) * vArrayChaos(iArrayRowCounter, 5))
+                End If
+                
+                If ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
+                    dAdjustedTotalOutputCH2 = dAdjustedTotalOutputCH2 + ((2.4582 * vArrayChaos(iArrayRowCounter, 14) - 15.204) * vArrayChaos(iArrayRowCounter, 5))
+                End If
+                
+                If ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
+                    dAdjustedTotalOutputCH3 = dAdjustedTotalOutputCH3 + ((3.1604 * vArrayChaos(iArrayRowCounter, 15) - 8.6614) * vArrayChaos(iArrayRowCounter, 5))
+                End If
+                
+                If (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
+                    dAdjustedTotalOutputCH4 = dAdjustedTotalOutputCH4 + (((-0.0076 * (vArrayChaos(iArrayRowCounter, 16) ^ 2)) + (2.2092 * vArrayChaos(iArrayRowCounter, 16)) - 16.318) * vArrayChaos(iArrayRowCounter, 5))
+                End If
+                
+                If ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
+                    dAdjustedTotalOutputCH5 = dAdjustedTotalOutputCH5 + ((3.807 * vArrayChaos(iArrayRowCounter, 17) - 32.702) * vArrayChaos(iArrayRowCounter, 5))
+                End If
+                
+                If ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * vArrayChaos(iArrayRowCounter, 5)) > 0 Then
+                    dAdjustedTotalOutputCH6 = dAdjustedTotalOutputCH6 + ((2.4158 * vArrayChaos(iArrayRowCounter, 18) - 17.079) * vArrayChaos(iArrayRowCounter, 5))
+                End If
             End If
             
             
