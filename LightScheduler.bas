@@ -956,19 +956,35 @@ Public Sub WriteToOutputChaos()
             
             'Adjust channel % for max photons
             
-            'Calculate output photons of each channel (micromol photons / m^2)
-            dCH1Output = (1.9726 * dCH1 - 16.916) * vArrayChaos(iArrayRowCounter, 5)
-            dCH2Output = (2.4582 * dCH2 - 15.204) * vArrayChaos(iArrayRowCounter, 5)
-'            dCH3Output = (3.1604 * dCH3 - 8.6614) * vArrayChaos(iArrayRowCounter, 5)
-'            dCH4Output = ((-0.0076 * (dCH4 ^ 2)) + (2.2092 * dCH4) - 16.318) * vArrayChaos(iArrayRowCounter, 5)
-'            dCH5Output = (3.807 * dCH5 - 32.702) * vArrayChaos(iArrayRowCounter, 5)
-'            dCH6Output = (2.4158 * dCH6 - 17.079) * vArrayChaos(iArrayRowCounter, 5)
+            If iArrayRowCounter > 1 Then
+                'Calculate output photons of each channel (micromol photons / m^2)
+                dCH1Output = (1.9726 * dCH1 - 16.916) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5))
+                dCH2Output = (2.4582 * dCH2 - 15.204) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5))
+    '            dCH3Output = (3.1604 * dCH3 - 8.6614) * vArrayChaos(iArrayRowCounter, 5)
+    '            dCH4Output = ((-0.0076 * (dCH4 ^ 2)) + (2.2092 * dCH4) - 16.318) * vArrayChaos(iArrayRowCounter, 5)
+    '            dCH5Output = (3.807 * dCH5 - 32.702) * vArrayChaos(iArrayRowCounter, 5)
+    '            dCH6Output = (2.4158 * dCH6 - 17.079) * vArrayChaos(iArrayRowCounter, 5)
+                
+                dCH3Output = (-0.0052 * (dCH3 ^ 2) + (3.0623 * dCH3) - 16.067) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5))
+                dCH4Output = ((9 * (10 ^ -6)) * (dCH4 ^ 3) - (0.0058 * (dCH4 ^ 2)) + (1.5671 * dCH4) - 3.7667) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5))
+                dCH5Output = ((-5 * (10 ^ -5)) * (dCH5 ^ 3) + (0.0045 * (dCH5 * 2)) + (2.8477 * dCH5) - 12.603) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5))
+                dCH6Output = ((-4 * (10 ^ -5)) * (dCH6 ^ 3) + (0.003 * (dCH6 ^ 2)) + (1.9106 * dCH6) - 9.6238) * (vArrayChaos(iArrayRowCounter, 5) - vArrayChaos(iArrayRowCounter - 1, 5))
+            Else
             
-            dCH3Output = (-0.0052 * (dCH3 ^ 2) + (3.0623 * dCH3) - 16.067) * vArrayChaos(iArrayRowCounter, 5)
-            dCH4Output = ((9 * (10 ^ -6)) * (dCH4 ^ 3) - (0.0058 * (dCH4 ^ 2)) + (1.5671 * dCH4) - 3.7667) * vArrayChaos(iArrayRowCounter, 5)
-            dCH5Output = ((-5 * (10 ^ -5)) * (dCH5 ^ 3) + (0.0045 * (dCH5 * 2)) + (2.8477 * dCH5) - 12.603) * vArrayChaos(iArrayRowCounter, 5)
-            dCH6Output = ((-4 * (10 ^ -5)) * (dCH6 ^ 3) + (0.003 * (dCH6 ^ 2)) + (1.9106 * dCH6) - 9.6238) * vArrayChaos(iArrayRowCounter, 5)
-            
+                dCH1Output = (1.9726 * dCH1 - 16.916) * vArrayChaos(iArrayRowCounter, 5)
+                dCH2Output = (2.4582 * dCH2 - 15.204) * vArrayChaos(iArrayRowCounter, 5)
+    '            dCH3Output = (3.1604 * dCH3 - 8.6614) * vArrayChaos(iArrayRowCounter, 5)
+    '            dCH4Output = ((-0.0076 * (dCH4 ^ 2)) + (2.2092 * dCH4) - 16.318) * vArrayChaos(iArrayRowCounter, 5)
+    '            dCH5Output = (3.807 * dCH5 - 32.702) * vArrayChaos(iArrayRowCounter, 5)
+    '            dCH6Output = (2.4158 * dCH6 - 17.079) * vArrayChaos(iArrayRowCounter, 5)
+                
+                dCH3Output = (-0.0052 * (dCH3 ^ 2) + (3.0623 * dCH3) - 16.067) * vArrayChaos(iArrayRowCounter, 5)
+                dCH4Output = ((9 * (10 ^ -6)) * (dCH4 ^ 3) - (0.0058 * (dCH4 ^ 2)) + (1.5671 * dCH4) - 3.7667) * vArrayChaos(iArrayRowCounter, 5)
+                dCH5Output = ((-5 * (10 ^ -5)) * (dCH5 ^ 3) + (0.0045 * (dCH5 * 2)) + (2.8477 * dCH5) - 12.603) * vArrayChaos(iArrayRowCounter, 5)
+                dCH6Output = ((-4 * (10 ^ -5)) * (dCH6 ^ 3) + (0.003 * (dCH6 ^ 2)) + (1.9106 * dCH6) - 9.6238) * vArrayChaos(iArrayRowCounter, 5)
+
+            End If
+                
             If dCH1Output < 0 Then
                 dCH1Output = 0
             End If
