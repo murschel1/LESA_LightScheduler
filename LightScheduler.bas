@@ -58,7 +58,7 @@ Const MIN_PERCENT3 As Double = 0
 Const MIN_PERCENT4 As Double = 0
 Const MIN_PERCENT5 As Double = 0
 Const MIN_PERCENT6 As Double = 0
-Const TOTAL_OUTPUT As Double = 10000000 'micromol photons/m2/day (or photoperiod)
+Const TOTAL_OUTPUT As Double = 14000000 'micromol photons/m2/day (or photoperiod)
 Const CHAOS_BASE_FUNCTION As Integer = 0 '0 = flat line, 1 = sine wave
 '*********************************************************************************************'
 Const CHAOS_ROUNDING_DIGITS As Integer = 6
@@ -785,6 +785,10 @@ Public Sub WriteToOutputChaos()
             'Add switching time to total time
             iTotalTime = iTotalTime + iSwitchTime
             
+            If iTotalTime > dPhotoPeriod Then
+               iTotalTime = dPhotoPeriod
+            End If
+            
             'Populate chaos array step time with total time plus random switching time
             vArrayChaos(iArrayChaosRows, 5) = iTotalTime
             
@@ -1129,9 +1133,11 @@ Public Sub WriteToOutputChaos()
         dAdjustedTotalOutput = dAdjustedTotalOutputCH1 + dAdjustedTotalOutputCH2 + dAdjustedTotalOutputCH3 + dAdjustedTotalOutputCH4 + dAdjustedTotalOutputCH5 + dAdjustedTotalOutputCH6
         
         'Add row for dark period
-        sDateTime = CStr(DateAdd("s", (vArrayChaos(iArrayRowCounter - 1, 5) - vArrayChaos(iArrayRowCounter - 2, 5)), CDate(sDateTime)))
+        'sDateTime = CStr(DateAdd("s", (vArrayChaos(iArrayRowCounter - 1, 5) - vArrayChaos(iArrayRowCounter - 2, 5)), CDate(sDateTime)))
+        
         
         sDate = Format(sDateTime, DATE_FORMATTING_STRING)
+        sDateTime = Format(sDate & " 0:00:00", DATE_FORMATTING_STRING & " " & TIME_FORMATTING_STRING)
         sTime = Format(sDateTime, TIME_FORMATTING_STRING)
             
         sHH = Left(sTime, InStr(sTime, ":") - 1)
