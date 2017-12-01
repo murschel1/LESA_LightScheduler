@@ -1133,7 +1133,7 @@ Public Sub WriteToOutputChaos()
         dAdjustedTotalOutput = dAdjustedTotalOutputCH1 + dAdjustedTotalOutputCH2 + dAdjustedTotalOutputCH3 + dAdjustedTotalOutputCH4 + dAdjustedTotalOutputCH5 + dAdjustedTotalOutputCH6
         
         'Add row for dark period
-        'sDateTime = CStr(DateAdd("s", (vArrayChaos(iArrayRowCounter - 1, 5) - vArrayChaos(iArrayRowCounter - 2, 5)), CDate(sDateTime)))
+        sDateTime = CStr(DateAdd("h", 24, CDate(sDateTime)))
         
         
         sDate = Format(sDateTime, DATE_FORMATTING_STRING)
